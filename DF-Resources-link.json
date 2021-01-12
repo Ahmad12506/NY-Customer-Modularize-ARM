@@ -41,16 +41,6 @@
 				"description": "The name can only contain letters, numbers, and '-', '(', ')', '_' or '.'."
 			}
 		},
-		"Save_into_SQL": {
-			"type": "string",
-			"metadata": {
-				"description": "Select 'Yes' to save output data into SQL. Otherwise 'No'."
-			},
-			"allowedValues": [
-				"Yes",
-				"No"
-			]
-		},
 		"yourserver": {
 			"type": "String",
 			"metadata": {

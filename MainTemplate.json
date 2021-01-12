@@ -1,0 +1,257 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "type": "string",
+            "defaultValue": "nydatafactory",
+            "metadata": {
+                "description": "The name can contain only letters, numbers and hyphens. The first and last characters must be a letter or number. Spaces are not allowed."
+                }
+        },
+        "currentTime": {
+            "type": "string",
+            "defaultValue": "[utcNow('u')]"
+        },
+        "storageAccountName": {
+            "type": "string",
+            "defaultValue": "storageacc",
+            "metadata": {
+            "description": "The field can contain only lowercase letters and numbers. Name must be between 1 and 11 characters."
+            }
+       },
+       "location": {
+            "type": "string",
+            "defaultValue": "eastus",
+            "metadata": {
+            "description": "By default EastUs is only allowed location for all resources."
+            }
+        },
+        "Action_Group_Name": {
+            "defaultValue": "actiongroup",
+            "type": "String",
+            "metadata": {
+                "description": "Provide an action group name that is unique with in the resource group."
+                }
+        },
+        "Action_Email": {
+            "defaultValue": "Ahmad.asad@emumba.com",
+            "type": "String",
+            "metadata": {
+                "description": "Enter Email to send the notification."
+                }
+        },
+        "Teams_connections_name": {
+            "defaultValue": "teams-1",
+            "type": "String",
+            "metadata": {
+                "description": "The name must begin with a letter or number, end with a letter, number or underscore, and may contain only letters, numbers, underscores, periods, or hyphens."
+                }
+        },
+        "Logic_App_Name": {
+            "defaultValue": "newlogicapp",
+            "type": "String",
+            "metadata": {
+                "description": "The name can only contain letters, numbers, and '-', '(', ')', '_' or '.'."
+                }
+        },
+        "Save_into_SQL":{
+            "defaultValue": "No",
+            "type": "string",
+            "metadata": {
+                "description": "Select 'Yes' to save output data into SQL. Otherwise 'No'."
+            },
+            "allowedValues":[
+                "Yes",
+                "No"
+            ]
+        },
+        "yourserver": {
+            "defaultValue": "",
+            "type": "String",
+            "metadata": {
+                "description": "Your server name can contain only lowercase letters, numbers, and '-', but can't start or end with '-' or have more than 50 characters."
+                }
+        },
+        "yourdb": {
+            "defaultValue": "",
+            "type": "String",
+            "metadata": {
+                "description": "Your database name can't end with '.' or ' ', can't contain '<,>,*,%,&,:/,?' or control characters."
+                }
+        },
+        "serverlogin": {
+            "defaultValue": "",
+            "type": "String",
+            "metadata": {
+                "description": "Your login name must not contain a SQL Identifier or a typical system name (like admin, administrator, sa, root, dbmanager, loginmanager, etc.) or a built-in database user or role (like dbo, guest, public, etc.)"
+                }
+        },
+        "serverpassword": {
+            "defaultValue": "",
+            "type": "securestring",
+            "metadata": {
+                "description": "Your password must contain characters from three of the following categories – English uppercase letters, English lowercase letters, numbers (0-9), and non-alphanumeric characters (!, $, #, %, etc.)"
+                }
+        }
+    },
+    "variables": {
+        "Logic_App_Name": "[concat( parameters('Logic_App_Name'), uniqueString(resourceGroup().id) )]",
+        "storageAccountName": "[concat( parameters('storageAccountName'), uniqueString(resourceGroup().id) )]",
+        "factoryName": "[concat( parameters('factoryName'), uniqueString(resourceGroup().id) )]",
+        "yourserver": "[concat( parameters('yourserver'), uniqueString(resourceGroup().id) )]",
+        "yourdb": "[concat( parameters('yourdb'), uniqueString(resourceGroup().id) )]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "storageAccount-link",
+            "properties": {
+              "mode": "Incremental",
+              "templateLink": {
+                "uri": "https://raw.githubusercontent.com/Ahmad12506/-NY-Modularize-ARM/main/storageAccount.json",
+                "contentVersion": "1.0.0.0"
+              },
+              "parameters": {
+                "storageAccountName": {
+                  "value": "[variables('storageAccountName')]"
+                },
+                "location": {
+                    "value": "[parameters('location')]"
+                }
+              }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "SQLServerandDB-link",
+            "dependsOn": [
+                "storageAccount-link"
+            ],
+            "properties": {
+              "mode": "Incremental",
+              "templateLink": {
+                "uri": "https://raw.githubusercontent.com/Ahmad12506/-NY-Modularize-ARM/main/SQLServerandDB.json",
+                "contentVersion": "1.0.0.0"
+              },
+              "parameters": {
+                    "Save_into_SQL":{
+                        "value": "[parameters('Save_into_SQL')]"
+                    },
+                    "yourserver": {
+                        "value": "[variables('yourserver')]"
+                    },
+                    "yourdb": {
+                        "value": "[variables('yourdb')]"
+                    },
+                    "serverlogin": {
+                        "value": "[parameters('serverlogin')]"
+                    },
+                    "serverpassword": {
+                        "value": "[parameters('serverpassword')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "Logicapp-connections-actiongroup-link",
+            "dependsOn": [
+                "SQLServerandDB-link"
+            ],
+            "properties": {
+              "mode": "Incremental",
+              "templateLink": {
+                "uri": "https://raw.githubusercontent.com/Ahmad12506/-NY-Modularize-ARM/main/logicapp_actiongroup_connection.json",
+                "contentVersion": "1.0.0.0"
+              },
+              "parameters": {
+                    "factoryName": {
+                        "value": "[variables('factoryName')]"
+                    },
+                    "storageAccountName": {
+                        "value": "[variables('storageAccountName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "Action_Group_Name": {
+                        "value": "[parameters('Action_Group_Name')]"
+                    },
+                    "Teams_connections_name": {
+                        "value": "[parameters('Teams_connections_name')]"
+                    },
+                    "Action_Email": {
+                        "value": "[parameters('Action_Email')]"
+                    },
+                    "Logic_App_Name": {
+                        "value": "[variables('Logic_App_Name')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "DF-Resources-link",
+            "dependsOn": [
+                "storageAccount-link",
+                "SQLServerandDB-link",
+                "Logicapp-connections-actiongroup-link"
+            ],
+            "properties": {
+              "mode": "Incremental",
+              "templateLink": {
+                "uri": "https://raw.githubusercontent.com/Ahmad12506/-NY-Modularize-ARM/main/DF-Resources.json",
+                "contentVersion": "1.0.0.0"
+              },
+              "parameters": {
+                    "factoryName": {
+                        "value": "[variables('factoryName')]"
+                    },
+                    "currentTime": {
+                        "value": "[parameters('currentTime')]"
+                    },
+                    "storageAccountName": {
+                        "value": "[variables('storageAccountName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "Action_Group_Name": {
+                        "value": "[parameters('Action_Group_Name')]"
+                    },
+                    "Action_Email": {
+                        "value": "[parameters('Action_Email')]"
+                    },
+                    "Save_into_SQL": {
+                        "value": "[parameters('Save_into_SQL')]"
+                    },
+                    "yourserver": {
+                        "value": "[variables('yourserver')]"
+                    },
+                    "yourdb": {
+                        "value": "[variables('yourdb')]"
+                    },
+                    "serverlogin": {
+                        "value": "[parameters('serverlogin')]"
+                    },
+                    "serverpassword": {
+                        "value": "[parameters('serverpassword')]"
+                    },
+                    "Logic_App_Name": {
+                        "value": "[variables('Logic_App_Name')]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {
+    }
+}

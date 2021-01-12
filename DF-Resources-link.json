@@ -1,0 +1,2293 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": {
+				"description": "The name can contain only letters, numbers and hyphens. The first and last characters must be a letter or number. Spaces are not allowed."
+			}
+		},
+		"currentTime": {
+			"type": "string"
+		},
+		"storageAccountName": {
+			"type": "string",
+			"metadata": {
+				"description": "The field can contain only lowercase letters and numbers. Name must be between 1 and 11 characters."
+			}
+		},
+		"location": {
+			"type": "string",
+			"metadata": {
+				"description": "By default EastUs is only allowed location for all resources."
+			}
+		},
+		"Action_Group_Name": {
+			"type": "String",
+			"metadata": {
+				"description": "Provide an action group name that is unique with in the resource group."
+			}
+		},
+		"Action_Email": {
+			"type": "String",
+			"metadata": {
+				"description": "Enter Email to send the notification."
+			}
+		},
+		"Logic_App_Name": {
+			"type": "String",
+			"metadata": {
+				"description": "The name can only contain letters, numbers, and '-', '(', ')', '_' or '.'."
+			}
+		},
+		"Save_into_SQL": {
+			"type": "string",
+			"metadata": {
+				"description": "Select 'Yes' to save output data into SQL. Otherwise 'No'."
+			},
+			"allowedValues": [
+				"Yes",
+				"No"
+			]
+		},
+		"yourserver": {
+			"type": "String",
+			"metadata": {
+				"description": "Your server name can contain only lowercase letters, numbers, and '-', but can't start or end with '-' or have more than 50 characters."
+			}
+		},
+		"yourdb": {
+			"type": "String",
+			"metadata": {
+				"description": "Your database name can't end with '.' or ' ', can't contain '<,>,*,%,&,:/,?' or control characters."
+			}
+		},
+		"serverlogin": {
+			"type": "String",
+			"metadata": {
+				"description": "Your login name must not contain a SQL Identifier or a typical system name (like admin, administrator, sa, root, dbmanager, loginmanager, etc.) or a built-in database user or role (like dbo, guest, public, etc.)"
+			}
+		},
+		"serverpassword": {
+			"type": "securestring",
+			"metadata": {
+				"description": "Your password must contain characters from three of the following categories – English uppercase letters, English lowercase letters, numbers (0-9), and non-alphanumeric characters (!, $, #, %, etc.)"
+			}
+		}
+	},
+	"variables": {
+		"factoryId": "[resourceId('Microsoft.DataFactory/factories', parameters('factoryName'))]",
+		"storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+		"databaseCollation": "SQL_Latin1_General_CP1_CI_AS"
+	},
+	"resources": [{
+			"type": "microsoft.insights/actionGroups",
+			"apiVersion": "2019-03-01",
+			"name": "[parameters('Action_Group_Name')]",
+			"location": "Global",
+			"properties": {
+				"groupShortName": "ahmad-AG",
+				"enabled": true,
+				"emailReceivers": [{
+					"name": "SendEmailEmail_-EmailAction-",
+					"emailAddress": "[parameters('Action_Email')]",
+					"useCommonAlertSchema": false
+				}],
+				"smsReceivers": [],
+				"webhookReceivers": [{
+					"name": "new-webhook",
+					"serviceUri": "[listCallbackURL(concat(resourceId('Microsoft.Logic/workflows', parameters('Logic_App_Name')), '/triggers/manual'), '2016-10-01').value]",
+					"useCommonAlertSchema": false
+				}],
+				"itsmReceivers": [],
+				"azureAppPushReceivers": [],
+				"automationRunbookReceivers": [],
+				"voiceReceivers": [],
+				"logicAppReceivers": [],
+				"azureFunctionReceivers": []
+			}
+		},
+		{
+			"type": "Microsoft.AlertsManagement/actionRules",
+			"apiVersion": "2019-05-05-preview",
+			"name": "CustomerSuppressedActionRule",
+			"location": "global",
+			"properties": {
+				"conditions": {
+					"monitorCondition": {
+						"operator": "Equals",
+						"values": [
+							"Resolved"
+						]
+					}
+				},
+				"status": "Enabled",
+				"type": "Suppression",
+				"scope": {
+					"scopeType": "Resource",
+					"values": [
+						"[variables('factoryId')]"
+					]
+				},
+				"suppressionConfig": {
+					"recurrenceType": "Always"
+				},
+				"description": "This is an suppressed rule to deactivate the email."
+			}
+		},
+		{
+			"type": "Microsoft.DataFactory/factories",
+			"apiVersion": "2018-06-01",
+			"name": "[parameters('factoryName')]",
+			"location": "[parameters('location')]",
+			"properties": {},
+			"identity": {
+				"type": "SystemAssigned"
+			}
+		},
+		{
+			"type": "Microsoft.AlertsManagement/actionRules",
+			"apiVersion": "2019-05-05-preview",
+			"name": "NewSuppressedActionRule",
+			"location": "global",
+			"properties": {
+				"conditions": {
+					"monitorCondition": {
+						"operator": "Equals",
+						"values": [
+							"Resolved"
+						]
+					}
+				},
+				"status": "Enabled",
+				"type": "Suppression",
+				"scope": {
+					"scopeType": "Resource",
+					"values": [
+						"[variables('factoryId')]"
+					]
+				},
+				"suppressionConfig": {
+					"recurrenceType": "Always"
+				},
+				"description": "This is an suppressed rule to deactivate the email."
+			}
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DailyTriggerSQL')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "This trigger will automatically runs on every day.",
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [{
+					"pipelineReference": {
+						"referenceName": "SqlDataLoader",
+						"type": "PipelineReference"
+					},
+					"parameters": {}
+				}],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Hour",
+						"interval": 24,
+						"startTime": "[parameters('currentTime')]",
+						"timeZone": "UTC"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/SqlDataLoader')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SqlDataLoader')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "This pipeline copy data from public blob container to customer blob container.",
+				"activities": [{
+						"name": "CopyDataPublicToCustomer",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 3,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": "*",
+									"wildcardFileName": "*",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [{
+							"referenceName": "CSVDatasetPublic",
+							"type": "DatasetReference",
+							"parameters": {}
+						}],
+						"outputs": [{
+							"referenceName": "CSVDatasetCustomer",
+							"type": "DatasetReference",
+							"parameters": {
+								"contianer_name": "customer"
+							}
+						}]
+					},
+					{
+						"name": "CreateSchema",
+						"type": "Lookup",
+						"dependsOn": [{
+								"activity": "SameColumnsButDifferentArangements",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "LessColumnnsInCurrentSchema",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "MoreColumnnsInCurrentSchema",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 3,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": {
+									"value": "IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'ch_schema')\nBEGIN\nEXEC('CREATE SCHEMA ch_schema')\nselect Count(*) from sys.symmetric_keys;\nEND\nELSE\nBEGIN\n    select Count(*) from sys.symmetric_keys;\nEND",
+									"type": "Expression"
+								},
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "AzureSqlStaging",
+								"type": "DatasetReference",
+								"parameters": {
+									"table_name": "staging_table",
+									"schema_name": "ch_schema"
+								}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "LoadIntoStagingTable_SQL",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [{
+							"activity": "CreateSchema",
+							"dependencyConditions": [
+								"Succeeded"
+							]
+						}],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 3,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "LoadIntoStagingTable_SQL",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"sourceCSV": {
+										"container": "customer",
+										"directory": "curated/covid-19/covid_tracking/latest",
+										"file": "covid_tracking.csv"
+									},
+									"sinksqlStagingTable": {
+										"table_name": "staging_table",
+										"schema_name": "ch_schema"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "LoadIntoOperationalTable_SQL",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [{
+							"activity": "CreateSchema",
+							"dependencyConditions": [
+								"Succeeded"
+							]
+						}],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 3,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "LoadIntoOperationalTable_SQL",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"sourceCSV": {
+										"container": "customer",
+										"directory": "curated/covid-19/covid_tracking/latest",
+										"file": "covid_tracking.csv"
+									},
+									"sinksqlOperationalTable": {
+										"table_name": "operational_table",
+										"schema_name": "ch_schema"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "MetaDataCurrentCSVFile",
+						"type": "GetMetadata",
+						"dependsOn": [{
+							"activity": "CopyDataPublicToCustomer",
+							"dependencyConditions": [
+								"Succeeded"
+							]
+						}],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 3,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "GetCurrentCSVFile",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"columnCount",
+								"structure"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "DelimitedTextReadSettings"
+							}
+						}
+					},
+					{
+						"name": "MetaDataLastCSVFile",
+						"type": "GetMetadata",
+						"dependsOn": [{
+							"activity": "CopyDataPublicToCustomer",
+							"dependencyConditions": [
+								"Succeeded"
+							]
+						}],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 3,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "SaveCurrentSchemaDataset",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"columnCount",
+								"structure"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "DelimitedTextReadSettings"
+							}
+						}
+					},
+					{
+						"name": "MoreColumnnsInCurrentSchema",
+						"description": "We will compare the incoming values from 2 metadata activities (CurrentCSV, LastSavedCSV)",
+						"type": "IfCondition",
+						"dependsOn": [{
+								"activity": "MetaDataCurrentCSVFile",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "MetaDataLastCSVFile",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@greater(activity('MetaDataCurrentCSVFile').output.columnCount,activity('MetaDataLastCSVFile').output.columnCount)",
+								"type": "Expression"
+							},
+							"ifFalseActivities": [{
+								"name": "Wait-FalseMoreColumns",
+								"type": "Wait",
+								"dependsOn": [],
+								"userProperties": [],
+								"typeProperties": {
+									"waitTimeInSeconds": 1
+								}
+							}],
+							"ifTrueActivities": [{
+								"name": "Alert_Schema_Has_More_Columns",
+								"type": "Wait",
+								"dependsOn": [],
+								"userProperties": [],
+								"typeProperties": {
+									"waitTimeInSeconds": 1
+								}
+							}]
+						}
+					},
+					{
+						"name": "LessColumnnsInCurrentSchema",
+						"description": "We will compare the incoming values from 2 metadata activities (CurrentCSV, LastSavedCSV)",
+						"type": "IfCondition",
+						"dependsOn": [{
+								"activity": "MetaDataCurrentCSVFile",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "MetaDataLastCSVFile",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@greater(activity('MetaDataLastCSVFile').output.columnCount,activity('MetaDataCurrentCSVFile').output.columnCount)",
+								"type": "Expression"
+							},
+							"ifFalseActivities": [{
+								"name": "Wait-FalseSchemaHasLessColumns",
+								"type": "Wait",
+								"dependsOn": [],
+								"userProperties": [],
+								"typeProperties": {
+									"waitTimeInSeconds": 1
+								}
+							}],
+							"ifTrueActivities": [{
+								"name": "Alert_Schema_Has_Less_Columns",
+								"description": "This is wait activity ans we shall setup alert on it.",
+								"type": "Wait",
+								"dependsOn": [],
+								"userProperties": [],
+								"typeProperties": {
+									"waitTimeInSeconds": 1
+								}
+							}]
+						}
+					},
+					{
+						"name": "SameColumnsButDifferentArangements",
+						"description": "We will compare the incoming values from 2 metadata activities (CurrentCSV, LastSavedCSV) to check the same columns but different schema.",
+						"type": "IfCondition",
+						"dependsOn": [{
+								"activity": "MetaDataLastCSVFile",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "MetaDataCurrentCSVFile",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@and(equals(activity('MetaDataCurrentCSVFile').output.columnCount,activity('MetaDataLastCSVFile').output.columnCount),not(equals(activity('MetaDataCurrentCSVFile').output.structure,activity('MetaDataLastCSVFile').output.structure)))",
+								"type": "Expression"
+							},
+							"ifFalseActivities": [{
+								"name": "Wait-FalseSameColumns",
+								"type": "Wait",
+								"dependsOn": [],
+								"userProperties": [],
+								"typeProperties": {
+									"waitTimeInSeconds": 1
+								}
+							}],
+							"ifTrueActivities": [{
+								"name": "Alert_Schema_Has_Same_Column_But_Different_Structure",
+								"type": "Wait",
+								"dependsOn": [],
+								"userProperties": [],
+								"typeProperties": {
+									"waitTimeInSeconds": 1
+								}
+							}]
+						}
+					},
+					{
+						"name": "GetLastSchema",
+						"type": "Copy",
+						"dependsOn": [{
+								"activity": "MoreColumnnsInCurrentSchema",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "LessColumnnsInCurrentSchema",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "SameColumnsButDifferentArangements",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 3,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [{
+							"referenceName": "SaveCurrentSchemaDataset",
+							"type": "DatasetReference",
+							"parameters": {}
+						}],
+						"outputs": [{
+							"referenceName": "GetLastSchemaDataset",
+							"type": "DatasetReference",
+							"parameters": {}
+						}]
+					},
+					{
+						"name": "SaveCurrentSchema",
+						"type": "Copy",
+						"dependsOn": [{
+							"activity": "GetLastSchema",
+							"dependencyConditions": [
+								"Completed"
+							]
+						}],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 3,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [{
+							"referenceName": "GetCurrentCSVFile",
+							"type": "DatasetReference",
+							"parameters": {}
+						}],
+						"outputs": [{
+							"referenceName": "SaveCurrentSchemaDataset",
+							"type": "DatasetReference",
+							"parameters": {}
+						}]
+					},
+					{
+						"name": "CreateProcedureIfNotExists",
+						"type": "Lookup",
+						"dependsOn": [{
+							"activity": "LoadIntoStagingTable_SQL",
+							"dependencyConditions": [
+								"Completed"
+							]
+						}],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 3,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": {
+									"value": "IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'ch_schema')\nBEGIN\nEXEC('CREATE SCHEMA ch_schema')\nEND\nIF NOT EXISTS (\n    select * \n    from sys.objects \n    WHERE object_id = OBJECT_ID(N'[ch_schema].[ProcDTypeChange]')\n    )\nBEGIN\n    EXEC('CREATE PROCEDURE ch_schema.ProcDTypeChange AS IF OBJECT_ID(''ch_schema.store_procedure_result'', ''u'') IS NOT NULL DROP TABLE ch_schema.store_procedure_result; CREATE TABLE ch_schema.store_procedure_result( table1_name varchar(255), Column1_name varchar(255), DATA_TYPE1 varchar(255), table2_name varchar(255), Column2_name varchar(255), DATA_TYPE2 varchar(255) ); INSERT INTO ch_schema.store_procedure_result SELECT c1.table_name, c1.COLUMN_NAME, c1.DATA_TYPE, c2.table_name, c2.COLUMN_NAME, c2.DATA_TYPE FROM [INFORMATION_SCHEMA].[COLUMNS] c1 INNER JOIN [INFORMATION_SCHEMA].[COLUMNS] c2 ON (c1.COLUMN_NAME = c2.COLUMN_NAME AND c1.data_type <> c2.DATA_TYPE) WHERE c1.table_name=''staging_table'' AND c2.table_name = ''current_table'';')\n    select Count(*) from sys.symmetric_keys;\nEND\nELSE\nBEGIN\n    select Count(*) from sys.symmetric_keys;\nEND",
+									"type": "Expression"
+								},
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "Save_StoreProcedureResults",
+								"type": "DatasetReference",
+								"parameters": {
+									"table_name": "store_procedure_result",
+									"schema_name": "ch_schema"
+								}
+							}
+						}
+					},
+					{
+						"name": "Detect Change in SQL DataType",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [{
+							"activity": "CreateProcedureIfNotExists",
+							"dependencyConditions": [
+								"Completed"
+							]
+						}],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 3,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[ch_schema].[ProcDTypeChange]"
+						},
+						"linkedServiceName": {
+							"referenceName": "AzureSqlDatabase",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "CompareDataTypeChange",
+						"type": "IfCondition",
+						"dependsOn": [{
+							"activity": "Get Store Procedure Output",
+							"dependencyConditions": [
+								"Completed"
+							]
+						}],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@greater(activity('Get Store Procedure Output').output.count,0)",
+								"type": "Expression"
+							},
+							"ifFalseActivities": [{
+								"name": "Wait-FalseDataType_NotChange",
+								"type": "Wait",
+								"dependsOn": [],
+								"userProperties": [],
+								"typeProperties": {
+									"waitTimeInSeconds": 1
+								}
+							}],
+							"ifTrueActivities": [{
+								"name": "Alert_Data_TypeChanged",
+								"type": "Wait",
+								"dependsOn": [],
+								"userProperties": [],
+								"typeProperties": {
+									"waitTimeInSeconds": 1
+								}
+							}]
+						}
+					},
+					{
+						"name": "Get Store Procedure Output",
+						"type": "Lookup",
+						"dependsOn": [{
+							"activity": "Detect Change in SQL DataType",
+							"dependencyConditions": [
+								"Completed"
+							]
+						}],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 3,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": {
+									"value": "select * from ch_schema.store_procedure_result",
+									"type": "Expression"
+								},
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "Save_StoreProcedureResults",
+								"type": "DatasetReference",
+								"parameters": {
+									"table_name": "store_procedure_result",
+									"schema_name": "ch_schema"
+								}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "get_last_table",
+						"type": "Copy",
+						"dependsOn": [{
+							"activity": "CompareDataTypeChange",
+							"dependencyConditions": [
+								"Completed"
+							]
+						}],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 3,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"preCopyScript": {
+									"value": "If OBJECT_ID('[ch_schema].[last_table]', 'U') is NOT NULL\n\nBEGIN\n\nDROP TABLE [ch_schema].[last_table];\n\nEND",
+									"type": "Expression"
+								},
+								"tableOption": "autoCreate",
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [{
+							"referenceName": "Save_CurrentSQLTable",
+							"type": "DatasetReference",
+							"parameters": {
+								"table_name": "current_table",
+								"schema_name": "ch_schema"
+							}
+						}],
+						"outputs": [{
+							"referenceName": "Get_LastTable",
+							"type": "DatasetReference",
+							"parameters": {
+								"table_name": "last_table",
+								"schema_name": "ch_schema"
+							}
+						}]
+					},
+					{
+						"name": "save_current_table",
+						"type": "Copy",
+						"dependsOn": [{
+							"activity": "get_last_table",
+							"dependencyConditions": [
+								"Completed"
+							]
+						}],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 3,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"preCopyScript": {
+									"value": "If OBJECT_ID('[ch_schema].[current_table]', 'U') is NOT NULL\n\nBEGIN\n\nDROP TABLE [ch_schema].[current_table];\n\nEND",
+									"type": "Expression"
+								},
+								"tableOption": "autoCreate",
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [{
+							"referenceName": "Get_CurrentTable",
+							"type": "DatasetReference",
+							"parameters": {
+								"table_name": "staging_table",
+								"schema_name": "ch_schema"
+							}
+						}],
+						"outputs": [{
+							"referenceName": "Save_CurrentSQLTable",
+							"type": "DatasetReference",
+							"parameters": {
+								"table_name": "current_table",
+								"schema_name": "ch_schema"
+							}
+						}]
+					}
+				],
+				"folder": {
+					"name": "CovidNewYorkTimes"
+				},
+				"annotations": [],
+				"lastPublishTime": "2021-01-12T05:51:45Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/CSVDatasetPublic')]",
+				"[concat(variables('factoryId'), '/datasets/CSVDatasetCustomer')]",
+				"[concat(variables('factoryId'), '/datasets/AzureSqlStaging')]",
+				"[concat(variables('factoryId'), '/dataflows/LoadIntoStagingTable_SQL')]",
+				"[concat(variables('factoryId'), '/dataflows/LoadIntoOperationalTable_SQL')]",
+				"[concat(variables('factoryId'), '/datasets/GetCurrentCSVFile')]",
+				"[concat(variables('factoryId'), '/datasets/SaveCurrentSchemaDataset')]",
+				"[concat(variables('factoryId'), '/datasets/GetLastSchemaDataset')]",
+				"[concat(variables('factoryId'), '/datasets/Save_StoreProcedureResults')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase')]",
+				"[concat(variables('factoryId'), '/datasets/Save_CurrentSQLTable')]",
+				"[concat(variables('factoryId'), '/datasets/Get_LastTable')]",
+				"[concat(variables('factoryId'), '/datasets/Get_CurrentTable')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/CSVDatasetPublic')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureBlobStoragePublic",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "CovidNewYorkTimes/Source"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"container": "public"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [{
+						"name": "Load_Date",
+						"type": "String"
+					},
+					{
+						"name": "Load_Time",
+						"type": "String"
+					},
+					{
+						"name": "Record_Date",
+						"type": "String"
+					},
+					{
+						"name": "County",
+						"type": "String"
+					},
+					{
+						"name": "State",
+						"type": "String"
+					},
+					{
+						"name": "Fips",
+						"type": "String"
+					},
+					{
+						"name": "Cases",
+						"type": "String"
+					},
+					{
+						"name": "Deaths",
+						"type": "String"
+					},
+					{
+						"name": "ISO_Country",
+						"type": "String"
+					},
+					{
+						"name": "Death_Rate",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[parameters('factoryName')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureBlobStoragePublic')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/CSVDatasetCustomer')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureBlobStorageCustomer",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"contianer_name": {
+						"type": "string",
+						"defaultValue": "customer"
+					}
+				},
+				"folder": {
+					"name": "CovidNewYorkTimes/Sinks"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"container": {
+							"value": "@dataset().contianer_name",
+							"type": "Expression"
+						}
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[parameters('factoryName')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureBlobStorageCustomer')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/GetCustomerSourceCSV')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureBlobStorageCustomer",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"container": {
+						"type": "string",
+						"defaultValue": "customer"
+					},
+					"directory": {
+						"type": "string",
+						"defaultValue": "curated/covid-19/covid_tracking/latest"
+					},
+					"file": {
+						"type": "string",
+						"defaultValue": "covid_tracking.csv"
+					}
+				},
+				"folder": {
+					"name": "CovidNewYorkTimes/Source"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": {
+							"value": "@dataset().file",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().directory",
+							"type": "Expression"
+						},
+						"container": {
+							"value": "@dataset().container",
+							"type": "Expression"
+						}
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[parameters('factoryName')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureBlobStorageCustomer')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlStaging')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"table_name": {
+						"type": "string",
+						"defaultValue": "staging_table"
+					},
+					"schema_name": {
+						"type": "string",
+						"defaultValue": "ch_schema"
+					}
+				},
+				"folder": {
+					"name": "CovidNewYorkTimes/Sinks"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().schema_name",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().table_name",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[parameters('factoryName')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlOperational')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"table_name": {
+						"type": "string",
+						"defaultValue": "operational_table"
+					},
+					"schema_name": {
+						"type": "string",
+						"defaultValue": "ch_schema"
+					}
+				},
+				"folder": {
+					"name": "CovidNewYorkTimes/Sinks"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().schema_name",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().table_name",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[parameters('factoryName')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/GetLastSchemaDataset')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureBlobStorageCustomer",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "CovidNewYorkTimes/Schema"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "Last_schema.csv",
+						"container": "schemachanges"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[parameters('factoryName')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureBlobStorageCustomer')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/GetCurrentCSVFile')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureBlobStorageCustomer",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "CovidNewYorkTimes/Schema"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "covid_tracking.csv",
+						"folderPath": "curated/covid-19/covid_tracking/latest",
+						"container": "customer"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[parameters('factoryName')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureBlobStorageCustomer')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SaveCurrentSchemaDataset')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureBlobStorageCustomer",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "CovidNewYorkTimes/Schema"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "Current_schema.csv",
+						"container": "schemachanges"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[parameters('factoryName')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureBlobStorageCustomer')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Get_CurrentTable')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"table_name": {
+						"type": "string",
+						"defaultValue": "staging_table"
+					},
+					"schema_name": {
+						"type": "string",
+						"defaultValue": "ch_schema"
+					}
+				},
+				"folder": {
+					"name": "CovidNewYorkTimes/DataTypeChange"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().schema_name",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().table_name",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[parameters('factoryName')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Save_StoreProcedureResults')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"table_name": {
+						"type": "string",
+						"defaultValue": "store_procedure_result"
+					},
+					"schema_name": {
+						"type": "string",
+						"defaultValue": "ch_schema"
+					}
+				},
+				"folder": {
+					"name": "CovidNewYorkTimes/DataTypeChange"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {}
+			},
+			"dependsOn": [
+				"[parameters('factoryName')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Save_CurrentSQLTable')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"table_name": {
+						"type": "string",
+						"defaultValue": "current_table"
+					},
+					"schema_name": {
+						"type": "string",
+						"defaultValue": "ch_schema"
+					}
+				},
+				"folder": {
+					"name": "CovidNewYorkTimes/DataTypeChange"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().schema_name",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().table_name",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[parameters('factoryName')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Get_LastTable')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"table_name": {
+						"type": "string",
+						"defaultValue": "last_table"
+					},
+					"schema_name": {
+						"type": "string",
+						"defaultValue": "ch_schema"
+					}
+				},
+				"folder": {
+					"name": "CovidNewYorkTimes/DataTypeChange"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().schema_name",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().table_name",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[parameters('factoryName')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureBlobStoragePublic')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "This is linked service to link connection to public side storage account.",
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"sasUri": "[parameters('publicSASURI')]"
+				}
+			},
+			"dependsOn": [
+				"[parameters('factoryName')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureBlobStorageCustomer')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "This is linked service to make connection with customer storage account.",
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"connectionString": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',listKeys(variables('storageAccountId'), '2019-06-01').keys[0].value)]"
+				}
+			},
+			"dependsOn": [
+				"[parameters('factoryName')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlDatabase')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "This linked service will be used to make connection to DB.",
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[concat('Server=tcp:',parameters('yourserver'),'.database.windows.net',',1433;Initial Catalog=',parameters('yourdb'),';Persist Security Info=False;User ID=',parameters('serverlogin'),';Password=',parameters('serverpassword'),';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
+				}
+			},
+			"dependsOn": [
+				"[parameters('factoryName')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LoadIntoOperationalTable_SQL')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [{
+						"dataset": {
+							"referenceName": "GetCustomerSourceCSV",
+							"type": "DatasetReference"
+						},
+						"name": "sourceCSV"
+					}],
+					"sinks": [{
+						"dataset": {
+							"referenceName": "AzureSqlOperational",
+							"type": "DatasetReference"
+						},
+						"name": "sinksqlOperationalTable"
+					}],
+					"transformations": [],
+					"script": "source(output(\n\t\tLoad_Date as date,\n\t\tLoad_Time as timestamp,\n\t\tRecord_Date as date,\n\t\tCounty as string,\n\t\tState as string,\n\t\tFips as integer,\n\t\tCases as short,\n\t\tDeaths as short,\n\t\tISO_Country as string,\n\t\tDeath_Rate as short\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tinferDriftedColumnTypes: true,\n\tpartitionBy('hash', 1)) ~> sourceCSV\nsourceCSV sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tpartitionBy('hash', 1),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError') ~> sinksqlOperationalTable"
+				}
+			},
+			"dependsOn": [
+				"[parameters('factoryName')]",
+				"[concat(variables('factoryId'), '/datasets/GetCustomerSourceCSV')]",
+				"[concat(variables('factoryId'), '/datasets/AzureSqlOperational')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LoadIntoStagingTable_SQL')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [{
+						"dataset": {
+							"referenceName": "GetCustomerSourceCSV",
+							"type": "DatasetReference"
+						},
+						"name": "sourceCSV"
+					}],
+					"sinks": [{
+						"dataset": {
+							"referenceName": "AzureSqlStaging",
+							"type": "DatasetReference"
+						},
+						"name": "sinksqlStagingTable"
+					}],
+					"transformations": [],
+					"script": "source(output(\n\t\tLoad_Date as date,\n\t\tLoad_Time as timestamp,\n\t\tRecord_Date as date,\n\t\tCounty as string,\n\t\tState as string,\n\t\tFips as integer,\n\t\tCases as short,\n\t\tDeaths as short,\n\t\tISO_Country as string,\n\t\tDeath_Rate as short\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tinferDriftedColumnTypes: true,\n\tpartitionBy('hash', 1)) ~> sourceCSV\nsourceCSV sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\trecreate:true,\n\tformat: 'table',\n\tpartitionBy('hash', 1),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError') ~> sinksqlStagingTable"
+				}
+			},
+			"dependsOn": [
+				"[parameters('factoryName')]",
+				"[concat(variables('factoryId'), '/datasets/GetCustomerSourceCSV')]",
+				"[concat(variables('factoryId'), '/datasets/AzureSqlStaging')]"
+			]
+		},
+		{
+			"type": "Microsoft.Insights/metricalerts",
+			"apiVersion": "2018-03-01",
+			"name": "Alert-ActivityCancel",
+			"location": "global",
+			"dependsOn": [
+				"[parameters('factoryName')]",
+				"[resourceId('microsoft.insights/actionGroups', parameters('Action_Group_Name'))]"
+			],
+			"properties": {
+				"description": "Alert-ActivityCancel",
+				"severity": 0,
+				"enabled": true,
+				"scopes": [
+					"[resourceId('Microsoft.DataFactory/factories', parameters('factoryName'))]"
+				],
+				"evaluationFrequency": "PT1M",
+				"windowSize": "PT1M",
+				"criteria": {
+					"allOf": [{
+						"threshold": 1,
+						"name": "fe55a00a-2e98-4aaa-bcbb-4fd1f1c92872",
+						"metricNamespace": "Microsoft.DataFactory/factories",
+						"metricName": "ActivityCancelledRuns",
+						"dimensions": [{
+								"name": "ActivityType",
+								"operator": "Include",
+								"values": [
+									"Copy",
+									"ExecuteDataFlow"
+								]
+							},
+							{
+								"name": "Name",
+								"operator": "Include",
+								"values": [
+									"CopyDataPublicToCustomer",
+									"LoadIntoStagingTable_SQL",
+									"get_last_table",
+									"save_current_table",
+									"GetLastSchema",
+									"LoadIntoOperationalTable_SQL",
+									"SaveCurrentSchema"
+								]
+							},
+							{
+								"name": "PipelineName",
+								"operator": "Include",
+								"values": [
+									"SqlDataLoader"
+								]
+							},
+							{
+								"name": "FailureType",
+								"operator": "Include",
+								"values": [
+									"UserError",
+									"SystemError",
+									"BadGateway"
+								]
+							}
+						],
+						"operator": "GreaterThanOrEqual",
+						"timeAggregation": "Average",
+						"criterionType": "StaticThresholdCriterion"
+					}],
+					"odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria"
+				},
+				"targetResourceType": "microsoft.datafactory/factories",
+				"actions": [{
+					"actionGroupId": "[resourceId('microsoft.insights/actionGroups', parameters('Action_Group_Name'))]",
+					"webHookProperties": {}
+				}]
+			}
+		},
+		{
+			"type": "Microsoft.Insights/metricalerts",
+			"apiVersion": "2018-03-01",
+			"name": "Alert-ActivityFails",
+			"location": "global",
+			"dependsOn": [
+				"[parameters('factoryName')]",
+				"[resourceId('microsoft.insights/actionGroups', parameters('Action_Group_Name'))]"
+			],
+			"properties": {
+				"description": "Alert-ActivityFails",
+				"severity": 0,
+				"enabled": true,
+				"scopes": [
+					"[resourceId('Microsoft.DataFactory/factories', parameters('factoryName'))]"
+				],
+				"evaluationFrequency": "PT1M",
+				"windowSize": "PT1M",
+				"criteria": {
+					"allOf": [{
+						"threshold": 1,
+						"name": "86e80589-f897-4ca6-8dd3-f9db4d14eddc",
+						"metricNamespace": "Microsoft.DataFactory/factories",
+						"metricName": "ActivityFailedRuns",
+						"dimensions": [{
+								"name": "ActivityType",
+								"operator": "Include",
+								"values": [
+									"Copy",
+									"ExecuteDataFlow"
+								]
+							},
+							{
+								"name": "Name",
+								"operator": "Include",
+								"values": [
+									"CopyDataPublicToCustomer",
+									"LoadIntoStagingTable_SQL",
+									"LoadIntoOperationalTable_SQL"
+								]
+							},
+							{
+								"name": "PipelineName",
+								"operator": "Include",
+								"values": [
+									"SqlDataLoader"
+								]
+							},
+							{
+								"name": "FailureType",
+								"operator": "Include",
+								"values": [
+									"UserError",
+									"SystemError",
+									"BadGateway"
+								]
+							}
+						],
+						"operator": "GreaterThanOrEqual",
+						"timeAggregation": "Average",
+						"criterionType": "StaticThresholdCriterion"
+					}],
+					"odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria"
+				},
+				"targetResourceType": "microsoft.datafactory/factories",
+				"actions": [{
+					"actionGroupId": "[resourceId('microsoft.insights/actionGroups', parameters('Action_Group_Name'))]",
+					"webHookProperties": {}
+				}]
+			}
+		},
+		{
+			"type": "Microsoft.Insights/metricalerts",
+			"apiVersion": "2018-03-01",
+			"name": "Alert-PipelineCancelled",
+			"location": "global",
+			"dependsOn": [
+				"[parameters('factoryName')]",
+				"[resourceId('microsoft.insights/actionGroups', parameters('Action_Group_Name'))]"
+			],
+			"properties": {
+				"description": "This pipeline is cancelled.",
+				"severity": 0,
+				"enabled": true,
+				"scopes": [
+					"[resourceId('Microsoft.DataFactory/factories', parameters('factoryName'))]"
+				],
+				"evaluationFrequency": "PT1M",
+				"windowSize": "PT1M",
+				"criteria": {
+					"allOf": [{
+						"threshold": 1,
+						"name": "488a34e4-1261-4a9d-9f76-ff9151601963",
+						"metricNamespace": "Microsoft.DataFactory/factories",
+						"metricName": "PipelineCancelledRuns",
+						"dimensions": [{
+								"name": "Name",
+								"operator": "Include",
+								"values": [
+									"SqlDataLoader"
+								]
+							},
+							{
+								"name": "FailureType",
+								"operator": "Include",
+								"values": [
+									"UserError",
+									"SystemError",
+									"BadGateway"
+								]
+							}
+						],
+						"operator": "GreaterThanOrEqual",
+						"timeAggregation": "Average",
+						"criterionType": "StaticThresholdCriterion"
+					}],
+					"odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria"
+				},
+				"targetResourceType": "microsoft.datafactory/factories",
+				"actions": [{
+					"actionGroupId": "[resourceId('microsoft.insights/actionGroups', parameters('Action_Group_Name'))]",
+					"webHookProperties": {}
+				}]
+			}
+		},
+		{
+			"type": "Microsoft.Insights/metricalerts",
+			"apiVersion": "2018-03-01",
+			"name": "Alert-PipelinedFailed",
+			"location": "global",
+			"dependsOn": [
+				"[parameters('factoryName')]",
+				"[resourceId('microsoft.insights/actionGroups', parameters('Action_Group_Name'))]"
+			],
+			"properties": {
+				"description": "Alert-PipelinedFailed",
+				"severity": 0,
+				"enabled": true,
+				"scopes": [
+					"[resourceId('Microsoft.DataFactory/factories', parameters('factoryName'))]"
+				],
+				"evaluationFrequency": "PT1M",
+				"windowSize": "PT1M",
+				"criteria": {
+					"allOf": [{
+						"threshold": 1,
+						"name": "0a5821db-b8bc-4077-807c-ef917a1bb04f",
+						"metricNamespace": "Microsoft.DataFactory/factories",
+						"metricName": "PipelineFailedRuns",
+						"dimensions": [{
+								"name": "Name",
+								"operator": "Include",
+								"values": [
+									"SqlDataLoader"
+								]
+							},
+							{
+								"name": "FailureType",
+								"operator": "Include",
+								"values": [
+									"UserError",
+									"SystemError",
+									"BadGateway"
+								]
+							}
+						],
+						"operator": "GreaterThanOrEqual",
+						"timeAggregation": "Average",
+						"criterionType": "StaticThresholdCriterion"
+					}],
+					"odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria"
+				},
+				"targetResourceType": "microsoft.datafactory/factories",
+				"actions": [{
+					"actionGroupId": "[resourceId('microsoft.insights/actionGroups', parameters('Action_Group_Name'))]",
+					"webHookProperties": {}
+				}]
+			}
+		},
+		{
+			"type": "Microsoft.Insights/metricalerts",
+			"apiVersion": "2018-03-01",
+			"name": "Alert-PipelineSucceeded",
+			"location": "global",
+			"dependsOn": [
+				"[parameters('factoryName')]",
+				"[resourceId('microsoft.insights/actionGroups', parameters('Action_Group_Name'))]"
+			],
+			"properties": {
+				"description": "Pipeline success!!!",
+				"severity": 0,
+				"enabled": true,
+				"scopes": [
+					"[resourceId('Microsoft.DataFactory/factories', parameters('factoryName'))]"
+				],
+				"evaluationFrequency": "PT1M",
+				"windowSize": "PT1M",
+				"criteria": {
+					"allOf": [{
+						"threshold": 1,
+						"name": "665c3bdc-a335-49f1-975b-5e359c8e77f4",
+						"metricNamespace": "Microsoft.DataFactory/factories",
+						"metricName": "PipelineSucceededRuns",
+						"dimensions": [{
+								"name": "Name",
+								"operator": "Include",
+								"values": [
+									"SqlDataLoader"
+								]
+							},
+							{
+								"name": "FailureType",
+								"operator": "Include",
+								"values": [
+									"none"
+								]
+							}
+						],
+						"operator": "GreaterThanOrEqual",
+						"timeAggregation": "Average",
+						"criterionType": "StaticThresholdCriterion"
+					}],
+					"odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria"
+				},
+				"targetResourceType": "microsoft.datafactory/factories",
+				"actions": [{
+					"actionGroupId": "[resourceId('microsoft.insights/actionGroups', parameters('Action_Group_Name'))]",
+					"webHookProperties": {}
+				}]
+			}
+		},
+		{
+			"type": "Microsoft.Insights/metricalerts",
+			"apiVersion": "2018-03-01",
+			"name": "Alert-SchemaHasLessColumns",
+			"location": "global",
+			"dependsOn": [
+				"[parameters('factoryName')]",
+				"[resourceId('microsoft.insights/actionGroups', parameters('Action_Group_Name'))]"
+			],
+			"properties": {
+				"description": "It is to notify that the current schema of the source has less column(s) than the schema of the same source previously detected.",
+				"severity": 0,
+				"enabled": true,
+				"scopes": [
+					"[resourceId('Microsoft.DataFactory/factories', parameters('factoryName'))]"
+				],
+				"evaluationFrequency": "PT1M",
+				"windowSize": "PT1M",
+				"criteria": {
+					"allOf": [{
+						"threshold": 1,
+						"name": "178064f9-19d9-4744-85fa-a569b22a4dfc",
+						"metricNamespace": "Microsoft.DataFactory/factories",
+						"metricName": "ActivitySucceededRuns",
+						"dimensions": [{
+								"name": "ActivityType",
+								"operator": "Include",
+								"values": [
+									"Wait"
+								]
+							},
+							{
+								"name": "Name",
+								"operator": "Include",
+								"values": [
+									"Alert_Schema_Has_Less_Columns"
+								]
+							},
+							{
+								"name": "PipelineName",
+								"operator": "Include",
+								"values": [
+									"SqlDataLoader"
+								]
+							},
+							{
+								"name": "FailureType",
+								"operator": "Include",
+								"values": [
+									"none"
+								]
+							}
+						],
+						"operator": "GreaterThanOrEqual",
+						"timeAggregation": "Average",
+						"criterionType": "StaticThresholdCriterion"
+					}],
+					"odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria"
+				},
+				"targetResourceType": "microsoft.datafactory/factories",
+				"actions": [{
+					"actionGroupId": "[resourceId('microsoft.insights/actionGroups', parameters('Action_Group_Name'))]",
+					"webHookProperties": {}
+				}]
+			}
+		},
+		{
+			"type": "Microsoft.Insights/metricalerts",
+			"apiVersion": "2018-03-01",
+			"name": "Alert-SchemaHasMoreColumns",
+			"location": "global",
+			"dependsOn": [
+				"[parameters('factoryName')]",
+				"[resourceId('microsoft.insights/actionGroups', parameters('Action_Group_Name'))]"
+			],
+			"properties": {
+				"description": "It is to notify that the current schema of the source has more column(s) than the schema of the same source previously detected.",
+				"severity": 0,
+				"enabled": true,
+				"scopes": [
+					"[resourceId('Microsoft.DataFactory/factories', parameters('factoryName'))]"
+				],
+				"evaluationFrequency": "PT1M",
+				"windowSize": "PT1M",
+				"criteria": {
+					"allOf": [{
+						"threshold": 1,
+						"name": "9ca97dac-37b7-49fa-b509-6b033fec2bc6",
+						"metricNamespace": "Microsoft.DataFactory/factories",
+						"metricName": "ActivitySucceededRuns",
+						"dimensions": [{
+								"name": "ActivityType",
+								"operator": "Include",
+								"values": [
+									"Wait"
+								]
+							},
+							{
+								"name": "Name",
+								"operator": "Include",
+								"values": [
+									"Alert_Schema_Has_More_Columns"
+								]
+							},
+							{
+								"name": "PipelineName",
+								"operator": "Include",
+								"values": [
+									"SqlDataLoader"
+								]
+							},
+							{
+								"name": "FailureType",
+								"operator": "Include",
+								"values": [
+									"none"
+								]
+							}
+						],
+						"operator": "GreaterThanOrEqual",
+						"timeAggregation": "Average",
+						"criterionType": "StaticThresholdCriterion"
+					}],
+					"odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria"
+				},
+				"targetResourceType": "microsoft.datafactory/factories",
+				"actions": [{
+					"actionGroupId": "[resourceId('microsoft.insights/actionGroups', parameters('Action_Group_Name'))]",
+					"webHookProperties": {}
+				}]
+			}
+		},
+		{
+			"type": "Microsoft.Insights/metricalerts",
+			"apiVersion": "2018-03-01",
+			"name": "Alert-SchemaHasSameColumnsButDifferentStructure",
+			"location": "global",
+			"dependsOn": [
+				"[parameters('factoryName')]",
+				"[resourceId('microsoft.insights/actionGroups', parameters('Action_Group_Name'))]"
+			],
+			"properties": {
+				"description": "It is to notify that the current schema of the source has same number of columns as the schema of the same source previously detected but either the arrangement of the columns is different or one or more columns have different names.",
+				"severity": 0,
+				"enabled": true,
+				"scopes": [
+					"[resourceId('Microsoft.DataFactory/factories', parameters('factoryName'))]"
+				],
+				"evaluationFrequency": "PT1M",
+				"windowSize": "PT1M",
+				"criteria": {
+					"allOf": [{
+						"threshold": 1,
+						"name": "1e8b98b2-426b-43f6-8440-4ef813d77a38",
+						"metricNamespace": "Microsoft.DataFactory/factories",
+						"metricName": "ActivitySucceededRuns",
+						"dimensions": [{
+								"name": "ActivityType",
+								"operator": "Include",
+								"values": [
+									"Wait"
+								]
+							},
+							{
+								"name": "Name",
+								"operator": "Include",
+								"values": [
+									"Alert_Schema_Has_Same_Column_But_Different_Structure"
+								]
+							},
+							{
+								"name": "PipelineName",
+								"operator": "Include",
+								"values": [
+									"SqlDataLoader"
+								]
+							},
+							{
+								"name": "FailureType",
+								"operator": "Include",
+								"values": [
+									"none"
+								]
+							}
+						],
+						"operator": "GreaterThanOrEqual",
+						"timeAggregation": "Average",
+						"criterionType": "StaticThresholdCriterion"
+					}],
+					"odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria"
+				},
+				"targetResourceType": "microsoft.datafactory/factories",
+				"actions": [{
+					"actionGroupId": "[resourceId('microsoft.insights/actionGroups', parameters('Action_Group_Name'))]",
+					"webHookProperties": {}
+				}]
+			}
+		},
+		{
+			"type": "Microsoft.Insights/metricalerts",
+			"apiVersion": "2018-03-01",
+			"name": "Alert-SQLDataType-Changed",
+			"location": "global",
+			"dependsOn": [
+				"[parameters('factoryName')]",
+				"[resourceId('microsoft.insights/actionGroups', parameters('Action_Group_Name'))]"
+			],
+			"properties": {
+				"description": "Change in data type for one or more column(s) has been detected in the sql table.",
+				"severity": 0,
+				"enabled": true,
+				"scopes": [
+					"[resourceId('Microsoft.DataFactory/factories', parameters('factoryName'))]"
+				],
+				"evaluationFrequency": "PT1M",
+				"windowSize": "PT1M",
+				"criteria": {
+					"allOf": [{
+						"threshold": 1,
+						"name": "33206fc9-0cf3-4d69-b05d-b23ef689795f",
+						"metricNamespace": "Microsoft.DataFactory/factories",
+						"metricName": "ActivitySucceededRuns",
+						"dimensions": [{
+								"name": "ActivityType",
+								"operator": "Include",
+								"values": [
+									"Wait"
+								]
+							},
+							{
+								"name": "Name",
+								"operator": "Include",
+								"values": [
+									"Alert_Data_TypeChanged"
+								]
+							},
+							{
+								"name": "PipelineName",
+								"operator": "Include",
+								"values": [
+									"SqlDataLoader"
+								]
+							},
+							{
+								"name": "FailureType",
+								"operator": "Include",
+								"values": [
+									"none"
+								]
+							}
+						],
+						"operator": "GreaterThanOrEqual",
+						"timeAggregation": "Average",
+						"criterionType": "StaticThresholdCriterion"
+					}],
+					"odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria"
+				},
+				"targetResourceType": "microsoft.datafactory/factories",
+				"actions": [{
+					"actionGroupId": "[resourceId('microsoft.insights/actionGroups', parameters('Action_Group_Name'))]",
+					"webHookProperties": {}
+				}]
+			}
+		},
+		{
+			"type": "Microsoft.Insights/metricalerts",
+			"apiVersion": "2018-03-01",
+			"name": "Alert-TriggerCancellation",
+			"location": "global",
+			"dependsOn": [
+				"[parameters('factoryName')]",
+				"[resourceId('microsoft.insights/actionGroups', parameters('Action_Group_Name'))]"
+			],
+			"properties": {
+				"description": "This is an alert that the trigger is cancelled.",
+				"severity": 0,
+				"enabled": true,
+				"scopes": [
+					"[resourceId('Microsoft.DataFactory/factories', parameters('factoryName'))]"
+				],
+				"evaluationFrequency": "PT1M",
+				"windowSize": "PT1M",
+				"criteria": {
+					"allOf": [{
+						"threshold": 1,
+						"name": "3d9b7998-aa48-4642-bf8e-cff1b70eef26",
+						"metricNamespace": "Microsoft.DataFactory/factories",
+						"metricName": "TriggerCancelledRuns",
+						"dimensions": [{
+							"name": "FailureType",
+							"operator": "Include",
+							"values": [
+								"UserError",
+								"SystemError",
+								"BadGateway"
+							]
+						}],
+						"operator": "GreaterThanOrEqual",
+						"timeAggregation": "Average",
+						"criterionType": "StaticThresholdCriterion"
+					}],
+					"odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria"
+				},
+				"targetResourceType": "microsoft.datafactory/factories",
+				"actions": [{
+					"actionGroupId": "[resourceId('microsoft.insights/actionGroups', parameters('Action_Group_Name'))]",
+					"webHookProperties": {}
+				}]
+			}
+		},
+		{
+			"type": "Microsoft.Insights/metricalerts",
+			"apiVersion": "2018-03-01",
+			"name": "Alert-TriggerFailed",
+			"location": "global",
+			"dependsOn": [
+				"[parameters('factoryName')]",
+				"[resourceId('microsoft.insights/actionGroups', parameters('Action_Group_Name'))]"
+			],
+			"properties": {
+				"description": "This is an alert that the trigger is Failed.",
+				"severity": 0,
+				"enabled": true,
+				"scopes": [
+					"[resourceId('Microsoft.DataFactory/factories', parameters('factoryName'))]"
+				],
+				"evaluationFrequency": "PT1M",
+				"windowSize": "PT1M",
+				"criteria": {
+					"allOf": [{
+						"threshold": 1,
+						"name": "66d5b903-4397-44da-bfd4-701b2b078d45",
+						"metricNamespace": "Microsoft.DataFactory/factories",
+						"metricName": "TriggerFailedRuns",
+						"dimensions": [{
+							"name": "FailureType",
+							"operator": "Include",
+							"values": [
+								"UserError",
+								"SystemError",
+								"BadGateway"
+							]
+						}],
+						"operator": "GreaterThanOrEqual",
+						"timeAggregation": "Average",
+						"criterionType": "StaticThresholdCriterion"
+					}],
+					"odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria"
+				},
+				"targetResourceType": "microsoft.datafactory/factories",
+				"actions": [{
+					"actionGroupId": "[resourceId('microsoft.insights/actionGroups', parameters('Action_Group_Name'))]",
+					"webHookProperties": {}
+				}]
+			}
+		}
+	]
+}

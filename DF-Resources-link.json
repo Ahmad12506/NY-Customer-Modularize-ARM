@@ -17,6 +17,12 @@
 				"description": "The field can contain only lowercase letters and numbers. Name must be between 1 and 11 characters."
 			}
 		},
+		"publicSASURI": {
+			"type": "string",
+			"metadata": {
+				"description": "Enter SAS URI for public side storage account."
+			}
+		},
 		"location": {
 			"type": "string",
 			"metadata": {

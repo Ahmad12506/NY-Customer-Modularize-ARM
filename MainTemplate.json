@@ -4,7 +4,7 @@
     "parameters": {
         "factoryName": {
             "type": "string",
-            "defaultValue": "nydatafactory",
+            "defaultValue": "nydatafahtyeb",
             "metadata": {
                 "description": "The name can contain only letters, numbers and hyphens. The first and last characters must be a letter or number. Spaces are not allowed."
                 }
@@ -15,9 +15,16 @@
         },
         "storageAccountName": {
             "type": "string",
-            "defaultValue": "storageacc",
+            "defaultValue": "storasdmfas",
             "metadata": {
             "description": "The field can contain only lowercase letters and numbers. Name must be between 1 and 11 characters."
+            }
+       },
+       "publicSASURI":{
+            "type": "string",
+            "defaultValue": "https://storag6o62wodqgdj2k.blob.core.windows.net/?sv=2019-12-12&ss=bfqt&srt=sco&sp=rwdlacupx&se=2021-03-01T17:54:45Z&st=2021-01-12T09:54:45Z&spr=https,http&sig=3tOpv%2FLnpM6JE0%2F748YBiV1FVEiOKZSKMA73ZpCmjZY%3D",
+            "metadata": {
+            "description": "Enter SAS URI for public side storage account."
             }
        },
        "location": {
@@ -55,17 +62,6 @@
                 "description": "The name can only contain letters, numbers, and '-', '(', ')', '_' or '.'."
                 }
         },
-        "Save_into_SQL":{
-            "defaultValue": "No",
-            "type": "string",
-            "metadata": {
-                "description": "Select 'Yes' to save output data into SQL. Otherwise 'No'."
-            },
-            "allowedValues":[
-                "Yes",
-                "No"
-            ]
-        },
         "yourserver": {
             "defaultValue": "",
             "type": "String",
@@ -78,14 +74,14 @@
             "type": "String",
             "metadata": {
                 "description": "Your database name can't end with '.' or ' ', can't contain '<,>,*,%,&,:/,?' or control characters."
-                }
+            }
         },
         "serverlogin": {
             "defaultValue": "",
             "type": "String",
             "metadata": {
                 "description": "Your login name must not contain a SQL Identifier or a typical system name (like admin, administrator, sa, root, dbmanager, loginmanager, etc.) or a built-in database user or role (like dbo, guest, public, etc.)"
-                }
+            }
         },
         "serverpassword": {
             "defaultValue": "",
@@ -110,7 +106,7 @@
             "properties": {
               "mode": "Incremental",
               "templateLink": {
-                "uri": "https://raw.githubusercontent.com/Ahmad12506/-NY-Modularize-ARM/main/storageAccount.json",
+                "uri": "https://raw.githubusercontent.com/Ahmad12506/NY-Customer-Modularize-ARM/main/storageAccount-link.json",
                 "contentVersion": "1.0.0.0"
               },
               "parameters": {
@@ -133,7 +129,7 @@
             "properties": {
               "mode": "Incremental",
               "templateLink": {
-                "uri": "https://raw.githubusercontent.com/Ahmad12506/-NY-Modularize-ARM/main/SQLServerandDB.json",
+                "uri": "https://raw.githubusercontent.com/Ahmad12506/NY-Customer-Modularize-ARM/main/SQLServerandDB-link.json",
                 "contentVersion": "1.0.0.0"
               },
               "parameters": {
@@ -168,7 +164,7 @@
             "properties": {
               "mode": "Incremental",
               "templateLink": {
-                "uri": "https://raw.githubusercontent.com/Ahmad12506/-NY-Modularize-ARM/main/logicapp_actiongroup_connection.json",
+                "uri": "https://raw.githubusercontent.com/Ahmad12506/NY-Customer-Modularize-ARM/main/Logicapp-connections-actiongroup-link.json",
                 "contentVersion": "1.0.0.0"
               },
               "parameters": {
@@ -208,7 +204,7 @@
             "properties": {
               "mode": "Incremental",
               "templateLink": {
-                "uri": "https://raw.githubusercontent.com/Ahmad12506/-NY-Modularize-ARM/main/DF-Resources.json",
+                "uri": "https://raw.githubusercontent.com/Ahmad12506/NY-Customer-Modularize-ARM/main/DF-Resources-link.json",
                 "contentVersion": "1.0.0.0"
               },
               "parameters": {

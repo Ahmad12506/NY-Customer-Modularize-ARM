@@ -1,0 +1,83 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "yourserver": {
+            "type": "String",
+            "metadata": {
+                "description": "Your server name can contain only lowercase letters, numbers, and '-', but can't start or end with '-' or have more than 50 characters."
+                }
+        },
+        "yourdb": {
+            "type": "String",
+            "metadata": {
+                "description": "Your database name can't end with '.' or ' ', can't contain '<,>,*,%,&,:/,?' or control characters."
+                }
+        },
+        "serverlogin": {
+            "type": "String",
+            "metadata": {
+                "description": "Your login name must not contain a SQL Identifier or a typical system name (like admin, administrator, sa, root, dbmanager, loginmanager, etc.) or a built-in database user or role (like dbo, guest, public, etc.)"
+                }
+        },
+        "serverpassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Your password must contain characters from three of the following categories – English uppercase letters, English lowercase letters, numbers (0-9), and non-alphanumeric characters (!, $, #, %, etc.)"
+                }
+        },
+        "location": {
+              "type": "string",
+              "metadata": {
+              "description": "By default EastUs is only allowed location for all resources."
+              }
+        }
+    },
+    "variables": {
+        "databaseCollation": "SQL_Latin1_General_CP1_CI_AS"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Sql/servers",
+            "apiVersion": "2020-02-02-preview",
+            "name": "[parameters('yourserver')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                            "administratorLogin": "[parameters('serverlogin')]",
+                            "administratorLoginPassword": "[parameters('serverpassword')]",
+                            "version": "12.0"
+            },
+            "resources": [
+            {
+                "type": "databases",
+                "apiVersion": "2020-08-01-preview",
+                "name": "[parameters('yourdb')]",
+                "location": "[parameters('location')]",
+                "sku": {
+                            "name": "Basic",
+                            "tier": "Basic",
+                            "capacity": 5
+                },
+                "properties": {
+                    "collation": "[variables('databaseCollation')]"
+                },
+                "dependsOn": [
+                    "[resourceId('Microsoft.Sql/servers', concat(parameters('yourserver')))]"
+                ]
+            }
+          ]
+        },
+        {
+            "type": "Microsoft.Sql/servers/firewallRules",
+            "apiVersion": "2015-05-01-preview",
+            "name": "[concat(parameters('yourserver'), '/AllowAllWindowsAzureIps')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers', concat(parameters('yourserver')))]"
+            ],
+            "properties": {
+                "startIpAddress": "0.0.0.0",
+                "endIpAddress": "0.0.0.0"
+            }
+        }
+    ]
+}

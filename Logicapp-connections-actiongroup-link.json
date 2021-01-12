@@ -1,0 +1,566 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name can contain only letters, numbers and hyphens. The first and last characters must be a letter or number. Spaces are not allowed."
+                }
+        },
+        "storageAccountName": {
+            "type": "string",
+            "metadata": {
+            "description": "The field can contain only lowercase letters and numbers. Name must be between 1 and 11 characters."
+            }
+       },
+       "location": {
+            "type": "string",
+            "metadata": {
+            "description": "By Default eastus location is allowed."
+            }
+        },
+        "Action_Group_Name": {
+            "type": "String",
+            "metadata": {
+                "description": "Provide an action group name that is unique with in the resource group."
+                }
+        },
+        "Teams_connections_name": {
+            "type": "String",
+            "metadata": {
+                "description": "The name must begin with a letter or number, end with a letter, number or underscore, and may contain only letters, numbers, underscores, periods, or hyphens."
+                }
+        },
+        "Action_Email": {
+            "type": "String",
+            "metadata": {
+                "description": "Enter Email to send the notification."
+                }
+        },
+        "Logic_App_Name": {
+            "type": "String",
+            "metadata": {
+                "description": "The name can only contain letters, numbers, and '-', '(', ')', '_' or '.'."
+                }
+        }          
+    },
+    "variables": {
+        "factoryId": "[resourceId('Microsoft.DataFactory/factories', parameters('factoryName'))]",
+        "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+        "databaseCollation": "SQL_Latin1_General_CP1_CI_AS"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Web/connections",
+            "apiVersion": "2016-06-01",
+            "name": "[parameters('Teams_connections_name')]",
+            "location": "eastus",
+            "kind": "V1",
+            "properties": {
+                "displayName": "Teams_Notification",
+                "customParameterValues": {},
+                "api": {
+                    "id": "/subscriptions/80ebef40-3f7f-4972-b829-72efcd567faf/providers/Microsoft.Web/locations/eastus/managedApis/teams"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2017-07-01",
+            "name": "[parameters('Logic_App_Name')]",
+            "location": "eastus",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/connections', parameters('Teams_connections_name'))]"
+            ],
+            "properties": {
+                "state": "Enabled",
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "$connections": {
+                            "defaultValue": {},
+                            "type": "Object"
+                        }
+                    },
+                    "triggers": {
+                        "manual": {
+                            "type": "Request",
+                            "kind": "Http",
+                            "inputs": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "context": {
+                                                    "properties": {
+                                                        "condition": {
+                                                            "properties": {
+                                                                "allOf": {
+                                                                    "items": {
+                                                                        "properties": {
+                                                                            "dimensions": {
+                                                                                "items": {
+                                                                                    "properties": {
+                                                                                        "name": {
+                                                                                            "type": "string"
+                                                                                        },
+                                                                                        "value": {
+                                                                                            "type": "string"
+                                                                                        }
+                                                                                    },
+                                                                                    "required": [
+                                                                                        "name",
+                                                                                        "value"
+                                                                                    ],
+                                                                                    "type": "object"
+                                                                                },
+                                                                                "type": "array"
+                                                                            },
+                                                                            "metricName": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "metricNamespace": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "metricValue": {
+                                                                                "type": "integer"
+                                                                            },
+                                                                            "operator": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "threshold": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "timeAggregation": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "webTestName": {}
+                                                                        },
+                                                                        "required": [
+                                                                            "metricName",
+                                                                            "metricNamespace",
+                                                                            "operator",
+                                                                            "threshold",
+                                                                            "timeAggregation",
+                                                                            "dimensions",
+                                                                            "metricValue",
+                                                                            "webTestName"
+                                                                        ],
+                                                                        "type": "object"
+                                                                    },
+                                                                    "type": "array"
+                                                                },
+                                                                "windowSize": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "conditionType": {
+                                                            "type": "string"
+                                                        },
+                                                        "description": {
+                                                            "type": "string"
+                                                        },
+                                                        "id": {
+                                                            "type": "string"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "portalLink": {
+                                                            "type": "string"
+                                                        },
+                                                        "resourceGroupName": {
+                                                            "type": "string"
+                                                        },
+                                                        "resourceId": {
+                                                            "type": "string"
+                                                        },
+                                                        "resourceName": {
+                                                            "type": "string"
+                                                        },
+                                                        "resourceType": {
+                                                            "type": "string"
+                                                        },
+                                                        "severity": {
+                                                            "type": "string"
+                                                        },
+                                                        "subscriptionId": {
+                                                            "type": "string"
+                                                        },
+                                                        "timestamp": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "properties": {},
+                                                "status": {
+                                                    "type": "string"
+                                                },
+                                                "version": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "schemaId": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "actions": {
+                        "Switch": {
+                            "runAfter": {},
+                            "cases": {
+                                "Case": {
+                                    "case": "PipelineFailedRuns",
+                                    "actions": {
+                                        "Post_a_message_(V3)": {
+                                            "runAfter": {},
+                                            "type": "ApiConnection",
+                                            "inputs": {
+                                                "body": {
+                                                    "body": {
+                                                        "content": "<p>Pipeline Failure Alert<br>\n<br>\nAlert generated by resource : @{triggerBody()['data']['context']['id']} &nbsp;&nbsp;<br>\nAlert name: @{triggerBody()['data']['context']['name']} &nbsp;&nbsp;&nbsp;<br>\nDescription: @{triggerBody()['data']['context']['description']} &nbsp;&nbsp;<br>\nAt time: @{triggerBody()['data']['context']['timestamp']} &nbsp;&nbsp;&nbsp;<br>\nResourceGroup Name: @{triggerBody()['data']['context']['resourceGroupName']} &nbsp;&nbsp;&nbsp;&nbsp;<br>\nResource Name: @{triggerBody()['data']['context']['resourceName']} &nbsp;&nbsp;&nbsp;<br>\nResource Type: @{triggerBody()['data']['context']['resourceType']} &nbsp;&nbsp;&nbsp;<br>\nFailed Pipeline Name: @{triggerBody().data.context.condition.allOf[0].dimensions[1]['value']}<br>\nFailure Type: @{triggerBody().data.context.condition.allOf[0].dimensions[2]['value']}</p>",
+                                                        "contentType": "html"
+                                                    }
+                                                },
+                                                "host": {
+                                                    "connection": {
+                                                        "name": "@parameters('$connections')['teams']['connectionId']"
+                                                    }
+                                                },
+                                                "method": "post",
+                                                "path": "/v3/beta/teams/@{encodeURIComponent('7ee21ca8-fec4-4608-b0a2-b0721d119588')}/channels/@{encodeURIComponent('19:bd493696436340bf82a2b299fa9080a3@thread.tacv2')}/messages"
+                                            }
+                                        }
+                                    }
+                                },
+                                "Case_2": {
+                                    "case": "PipelineCancelledRuns",
+                                    "actions": {
+                                        "Post_a_message_(V3)_2": {
+                                            "runAfter": {},
+                                            "type": "ApiConnection",
+                                            "inputs": {
+                                                "body": {
+                                                    "body": {
+                                                        "content": "<p>Hello this is Pipeline Cancellation Alert:<br>\n<br>\n&nbsp;<br>\nAlert name: @{triggerBody()['data']['context']['name']} &nbsp;&nbsp;&nbsp;<br>\nDescription: @{triggerBody()['data']['context']['description']} &nbsp;&nbsp;<br>\nResourceGroup Name: @{triggerBody()['data']['context']['resourceGroupName']} &nbsp;&nbsp;&nbsp;&nbsp;<br>\nResource Name: @{triggerBody()['data']['context']['resourceName']} &nbsp;&nbsp;&nbsp;<br>\nResource Type: @{triggerBody()['data']['context']['resourceType']} &nbsp;&nbsp;&nbsp;<br>\nCancelled Pipeline Name: @{triggerBody().data.context.condition.allOf[0].dimensions[1]['value']}</p>",
+                                                        "contentType": "html"
+                                                    }
+                                                },
+                                                "host": {
+                                                    "connection": {
+                                                        "name": "@parameters('$connections')['teams']['connectionId']"
+                                                    }
+                                                },
+                                                "method": "post",
+                                                "path": "/v3/beta/teams/@{encodeURIComponent('7ee21ca8-fec4-4608-b0a2-b0721d119588')}/channels/@{encodeURIComponent('19:bd493696436340bf82a2b299fa9080a3@thread.tacv2')}/messages"
+                                            }
+                                        }
+                                    }
+                                },
+                                "Case_3": {
+                                    "case": "ActivityFailedRuns",
+                                    "actions": {
+                                        "Post_a_message_(V3)_3": {
+                                            "runAfter": {},
+                                            "type": "ApiConnection",
+                                            "inputs": {
+                                                "body": {
+                                                    "body": {
+                                                        "content": "<p>Activity Failure Alert<br>\n<br>\nAlert generated by resource : @{triggerBody()['data']['context']['id']} &nbsp;&nbsp;<br>\nAlert name: @{triggerBody()['data']['context']['name']} &nbsp;&nbsp;&nbsp;<br>\nDescription: @{triggerBody()['data']['context']['description']} &nbsp;&nbsp;<br>\nAt time: @{triggerBody()['data']['context']['timestamp']} &nbsp;&nbsp;&nbsp;<br>\nResourceGroup Name: @{triggerBody()['data']['context']['resourceGroupName']} &nbsp;&nbsp;&nbsp;&nbsp;<br>\nResource Name: @{triggerBody()['data']['context']['resourceName']} &nbsp;&nbsp;&nbsp;<br>\nResource Type: @{triggerBody()['data']['context']['resourceType']} &nbsp;&nbsp;&nbsp;<br>\nFailed Activity Type: @{triggerBody().data.context.condition.allOf[0].dimensions[1]['value']}<br>\nFailed Activity Name: @{triggerBody().data.context.condition.allOf[0].dimensions[2]['value']}<br>\nFailure Type: @{triggerBody().data.context.condition.allOf[0].dimensions[4]['value']}&nbsp;</p>",
+                                                        "contentType": "html"
+                                                    }
+                                                },
+                                                "host": {
+                                                    "connection": {
+                                                        "name": "@parameters('$connections')['teams']['connectionId']"
+                                                    }
+                                                },
+                                                "method": "post",
+                                                "path": "/v3/beta/teams/@{encodeURIComponent('7ee21ca8-fec4-4608-b0a2-b0721d119588')}/channels/@{encodeURIComponent('19:bd493696436340bf82a2b299fa9080a3@thread.tacv2')}/messages"
+                                            }
+                                        }
+                                    }
+                                },
+                                "Case_4": {
+                                    "case": "ActivityCancelledRuns",
+                                    "actions": {
+                                        "Post_a_message_(V3)_4": {
+                                            "runAfter": {},
+                                            "type": "ApiConnection",
+                                            "inputs": {
+                                                "body": {
+                                                    "body": {
+                                                        "content": "<p>Activity Cancellation Alert<br>\n<br>\nAlert generated by resource : @{triggerBody()['data']['context']['id']} &nbsp;&nbsp;<br>\nAlert name: @{triggerBody()['data']['context']['name']} &nbsp;&nbsp;&nbsp;<br>\nDescription: @{triggerBody()['data']['context']['description']} &nbsp;&nbsp;<br>\nAt time: @{triggerBody()['data']['context']['timestamp']} &nbsp;&nbsp;&nbsp;<br>\nResourceGroup Name: @{triggerBody()['data']['context']['resourceGroupName']} &nbsp;&nbsp;&nbsp;&nbsp;<br>\nResource Name: @{triggerBody()['data']['context']['resourceName']} &nbsp;&nbsp;&nbsp;<br>\nResource Type: @{triggerBody()['data']['context']['resourceType']} &nbsp;&nbsp;&nbsp;<br>\nCancelled Activity Type: @{triggerBody().data.context.condition.allOf[0].dimensions[1]['value']}<br>\nCancelled Activity Name: @{triggerBody().data.context.condition.allOf[0].dimensions[2]['value']}<br>\n&nbsp;</p>",
+                                                        "contentType": "html"
+                                                    }
+                                                },
+                                                "host": {
+                                                    "connection": {
+                                                        "name": "@parameters('$connections')['teams']['connectionId']"
+                                                    }
+                                                },
+                                                "method": "post",
+                                                "path": "/v3/beta/teams/@{encodeURIComponent('7ee21ca8-fec4-4608-b0a2-b0721d119588')}/channels/@{encodeURIComponent('19:bd493696436340bf82a2b299fa9080a3@thread.tacv2')}/messages"
+                                            }
+                                        }
+                                    }
+                                },
+                                "Case_5": {
+                                    "case": "PipelineSucceededRuns",
+                                    "actions": {
+                                        "Post_a_message_(V3)_5": {
+                                            "runAfter": {},
+                                            "type": "ApiConnection",
+                                            "inputs": {
+                                                "body": {
+                                                    "body": {
+                                                        "content": "<p>Pipeline Success Alert<br>\n<br>\nAlert generated by resource : @{triggerBody()['data']['context']['id']} &nbsp;&nbsp;<br>\nAlert name: @{triggerBody()['data']['context']['name']} &nbsp;&nbsp;&nbsp;<br>\nDescription: @{triggerBody()['data']['context']['description']} &nbsp;&nbsp;<br>\nAt time: @{triggerBody()['data']['context']['timestamp']} &nbsp;&nbsp;&nbsp;<br>\nResourceGroup Name: @{triggerBody()['data']['context']['resourceGroupName']} &nbsp;&nbsp;&nbsp;&nbsp;<br>\nResource Name: @{triggerBody()['data']['context']['resourceName']} &nbsp;&nbsp;&nbsp;<br>\nResource Type: @{triggerBody()['data']['context']['resourceType']} &nbsp;&nbsp;&nbsp;<br>\nSucceeded Pipeline Name: @{triggerBody().data.context.condition.allOf[0].dimensions[1]['value']}<br>\nFailure Type: @{triggerBody().data.context.condition.allOf[0].dimensions[2]['value']}</p>",
+                                                        "contentType": "html"
+                                                    }
+                                                },
+                                                "host": {
+                                                    "connection": {
+                                                        "name": "@parameters('$connections')['teams']['connectionId']"
+                                                    }
+                                                },
+                                                "method": "post",
+                                                "path": "/v3/beta/teams/@{encodeURIComponent('7ee21ca8-fec4-4608-b0a2-b0721d119588')}/channels/@{encodeURIComponent('19:bd493696436340bf82a2b299fa9080a3@thread.tacv2')}/messages"
+                                            }
+                                        }
+                                    }
+                                },
+                                "Case_6": {
+                                    "case": "ActivitySucceededRuns",
+                                    "actions": {
+                                        "Switch_2": {
+                                            "runAfter": {},
+                                            "cases": {
+                                                "Case": {
+                                                    "case": "Alert-SchemaHasMoreColumns",
+                                                    "actions": {
+                                                        "Post_a_message_(V3)_6": {
+                                                            "runAfter": {},
+                                                            "type": "ApiConnection",
+                                                            "inputs": {
+                                                                "body": {
+                                                                    "body": {
+                                                                        "content": "<p>Current Schema Has More Columns Alert<br>\n<br>\nAlert generated by resource : @{triggerBody()['data']['context']['id']} &nbsp;&nbsp;<br>\nAlert name: @{triggerBody()['data']['context']['name']} &nbsp;&nbsp;&nbsp;<br>\nDescription: @{triggerBody()['data']['context']['description']} &nbsp;&nbsp;<br>\nAt time: @{triggerBody()['data']['context']['timestamp']} &nbsp;&nbsp;&nbsp;<br>\nResourceGroup Name: @{triggerBody()['data']['context']['resourceGroupName']} &nbsp;&nbsp;&nbsp;&nbsp;<br>\nResource Name: @{triggerBody()['data']['context']['resourceName']} &nbsp;&nbsp;&nbsp;<br>\nResource Type: @{triggerBody()['data']['context']['resourceType']} &nbsp;&nbsp;&nbsp;</p>",
+                                                                        "contentType": "html"
+                                                                    }
+                                                                },
+                                                                "host": {
+                                                                    "connection": {
+                                                                        "name": "@parameters('$connections')['teams']['connectionId']"
+                                                                    }
+                                                                },
+                                                                "method": "post",
+                                                                "path": "/v3/beta/teams/@{encodeURIComponent('7ee21ca8-fec4-4608-b0a2-b0721d119588')}/channels/@{encodeURIComponent('19:bd493696436340bf82a2b299fa9080a3@thread.tacv2')}/messages"
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "Case_2": {
+                                                    "case": "Alert-SchemaHasLessColumns",
+                                                    "actions": {
+                                                        "Post_a_message_(V3)_7": {
+                                                            "runAfter": {},
+                                                            "type": "ApiConnection",
+                                                            "inputs": {
+                                                                "body": {
+                                                                    "body": {
+                                                                        "content": "<p>Current Schema Has Less Columns Alert<br>\n<br>\nAlert generated by resource : @{triggerBody()['data']['context']['id']} &nbsp;&nbsp;<br>\nAlert name: @{triggerBody()['data']['context']['name']} &nbsp;&nbsp;&nbsp;<br>\nDescription: @{triggerBody()['data']['context']['description']} &nbsp;&nbsp;<br>\nAt time: @{triggerBody()['data']['context']['timestamp']} &nbsp;&nbsp;&nbsp;<br>\nResourceGroup Name: @{triggerBody()['data']['context']['resourceGroupName']} &nbsp;&nbsp;&nbsp;&nbsp;<br>\nResource Name: @{triggerBody()['data']['context']['resourceName']} &nbsp;&nbsp;&nbsp;<br>\nResource Type: @{triggerBody()['data']['context']['resourceType']} &nbsp;&nbsp;&nbsp;</p>",
+                                                                        "contentType": "html"
+                                                                    }
+                                                                },
+                                                                "host": {
+                                                                    "connection": {
+                                                                        "name": "@parameters('$connections')['teams']['connectionId']"
+                                                                    }
+                                                                },
+                                                                "method": "post",
+                                                                "path": "/v3/beta/teams/@{encodeURIComponent('7ee21ca8-fec4-4608-b0a2-b0721d119588')}/channels/@{encodeURIComponent('19:bd493696436340bf82a2b299fa9080a3@thread.tacv2')}/messages"
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "Case_3": {
+                                                    "case": "Alert-SchemaHasSameColumnsButDifferentStructure",
+                                                    "actions": {
+                                                        "Post_a_message_(V3)_8": {
+                                                            "runAfter": {},
+                                                            "type": "ApiConnection",
+                                                            "inputs": {
+                                                                "body": {
+                                                                    "body": {
+                                                                        "content": "<p>Current Schema Has Different Columns Alert<br>\n<br>\nAlert generated by resource : @{triggerBody()['data']['context']['id']} &nbsp;&nbsp;<br>\nAlert name: @{triggerBody()['data']['context']['name']} &nbsp;&nbsp;&nbsp;<br>\nDescription: @{triggerBody()['data']['context']['description']} &nbsp;&nbsp;<br>\nAt time: @{triggerBody()['data']['context']['timestamp']} &nbsp;&nbsp;&nbsp;<br>\nResourceGroup Name: @{triggerBody()['data']['context']['resourceGroupName']} &nbsp;&nbsp;&nbsp;&nbsp;<br>\nResource Name: @{triggerBody()['data']['context']['resourceName']} &nbsp;&nbsp;&nbsp;<br>\nResource Type: @{triggerBody()['data']['context']['resourceType']} &nbsp;&nbsp;&nbsp;</p>",
+                                                                        "contentType": "html"
+                                                                    }
+                                                                },
+                                                                "host": {
+                                                                    "connection": {
+                                                                        "name": "@parameters('$connections')['teams']['connectionId']"
+                                                                    }
+                                                                },
+                                                                "method": "post",
+                                                                "path": "/v3/beta/teams/@{encodeURIComponent('7ee21ca8-fec4-4608-b0a2-b0721d119588')}/channels/@{encodeURIComponent('19:bd493696436340bf82a2b299fa9080a3@thread.tacv2')}/messages"
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "Case_4": {
+                                                    "case": "Alert-SQLDataType-Changed",
+                                                    "actions": {
+                                                        "Post_a_message_(V3)_9": {
+                                                            "runAfter": {},
+                                                            "type": "ApiConnection",
+                                                            "inputs": {
+                                                                "body": {
+                                                                    "body": {
+                                                                        "content": "<p>Data Type in Columns Change Alert<br>\n<br>\nAlert generated by resource : @{triggerBody()['data']['context']['id']} &nbsp;&nbsp;<br>\nAlert name: @{triggerBody()['data']['context']['name']} &nbsp;&nbsp;&nbsp;<br>\nDescription: @{triggerBody()['data']['context']['description']} &nbsp;&nbsp;<br>\nAt time: @{triggerBody()['data']['context']['timestamp']} &nbsp;&nbsp;&nbsp;<br>\nResourceGroup Name: @{triggerBody()['data']['context']['resourceGroupName']} &nbsp;&nbsp;&nbsp;&nbsp;<br>\nResource Name: @{triggerBody()['data']['context']['resourceName']} &nbsp;&nbsp;&nbsp;<br>\nResource Type: @{triggerBody()['data']['context']['resourceType']}&nbsp;</p>",
+                                                                        "contentType": "html"
+                                                                    }
+                                                                },
+                                                                "host": {
+                                                                    "connection": {
+                                                                        "name": "@parameters('$connections')['teams']['connectionId']"
+                                                                    }
+                                                                },
+                                                                "method": "post",
+                                                                "path": "/v3/beta/teams/@{encodeURIComponent('7ee21ca8-fec4-4608-b0a2-b0721d119588')}/channels/@{encodeURIComponent('19:bd493696436340bf82a2b299fa9080a3@thread.tacv2')}/messages"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "default": {
+                                                "actions": {
+                                                    "Post_a_message_(V3)_10": {
+                                                        "runAfter": {},
+                                                        "type": "ApiConnection",
+                                                        "inputs": {
+                                                            "body": {
+                                                                "body": {
+                                                                    "content": "<p>This is second default case.<br>\nNo such case is found.</p>",
+                                                                    "contentType": "html"
+                                                                }
+                                                            },
+                                                            "host": {
+                                                                "connection": {
+                                                                    "name": "@parameters('$connections')['teams']['connectionId']"
+                                                                }
+                                                            },
+                                                            "method": "post",
+                                                            "path": "/v3/beta/teams/@{encodeURIComponent('7ee21ca8-fec4-4608-b0a2-b0721d119588')}/channels/@{encodeURIComponent('19:bd493696436340bf82a2b299fa9080a3@thread.tacv2')}/messages"
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "expression": "@trim(triggerBody()['data']['context']['name'])",
+                                            "type": "Switch"
+                                        }
+                                    }
+                                },
+                                "Case_7": {
+                                    "case": "TriggerCancelledRuns",
+                                    "actions": {
+                                        "Post_a_message_(V3)_11": {
+                                            "runAfter": {},
+                                            "type": "ApiConnection",
+                                            "inputs": {
+                                                "body": {
+                                                    "body": {
+                                                        "content": "<p>Trigger Cancellation Alert<br>\n<br>\nAlert generated by resource : @{triggerBody()['data']['context']['id']} &nbsp;&nbsp;<br>\nAlert name: @{triggerBody()['data']['context']['name']} &nbsp;&nbsp;&nbsp;<br>\nDescription: @{triggerBody()['data']['context']['description']} &nbsp;&nbsp;<br>\nAt time: @{triggerBody()['data']['context']['timestamp']} &nbsp;&nbsp;&nbsp;<br>\nResourceGroup Name: @{triggerBody()['data']['context']['resourceGroupName']} &nbsp;&nbsp;&nbsp;&nbsp;<br>\nResource Name: @{triggerBody()['data']['context']['resourceName']} &nbsp;&nbsp;&nbsp;<br>\nResource Type: @{triggerBody()['data']['context']['resourceType']} &nbsp;&nbsp;&nbsp;<br>\nCancelled Trigger Name: @{triggerBody().data.context.condition.allOf[0].dimensions[1]['value']}</p>",
+                                                        "contentType": "html"
+                                                    }
+                                                },
+                                                "host": {
+                                                    "connection": {
+                                                        "name": "@parameters('$connections')['teams']['connectionId']"
+                                                    }
+                                                },
+                                                "method": "post",
+                                                "path": "/v3/beta/teams/@{encodeURIComponent('7ee21ca8-fec4-4608-b0a2-b0721d119588')}/channels/@{encodeURIComponent('19:bd493696436340bf82a2b299fa9080a3@thread.tacv2')}/messages"
+                                            }
+                                        }
+                                    }
+                                },
+                                "Case_8": {
+                                    "case": "TriggerFailedRuns",
+                                    "actions": {
+                                        "Post_a_message_(V3)_12": {
+                                            "runAfter": {},
+                                            "type": "ApiConnection",
+                                            "inputs": {
+                                                "body": {
+                                                    "body": {
+                                                        "content": "<p>Trigger Failure Alert<br>\n<br>\nAlert generated by resource: @{triggerBody()['data']['context']['id']} &nbsp;&nbsp;<br>\nAlert name: @{triggerBody()['data']['context']['name']} &nbsp;&nbsp;&nbsp;<br>\nDescription: @{triggerBody()['data']['context']['description']} &nbsp;&nbsp;<br>\nAt time: @{triggerBody()['data']['context']['timestamp']} &nbsp;&nbsp;&nbsp;<br>\nResourceGroup Name: @{triggerBody()['data']['context']['resourceGroupName']} &nbsp;&nbsp;&nbsp;&nbsp;<br>\nResource Name: @{triggerBody()['data']['context']['resourceName']} &nbsp;&nbsp;&nbsp;<br>\nResource Type: @{triggerBody()['data']['context']['resourceType']} &nbsp;&nbsp;&nbsp;<br>\nFailed Trigger Name: @{triggerBody().data.context.condition.allOf[0].dimensions[1]['value']}<br>\nFailure Type: @{triggerBody().data.context.condition.allOf[0].dimensions[2]['value']}</p>",
+                                                        "contentType": "html"
+                                                    }
+                                                },
+                                                "host": {
+                                                    "connection": {
+                                                        "name": "@parameters('$connections')['teams']['connectionId']"
+                                                    }
+                                                },
+                                                "method": "post",
+                                                "path": "/v3/beta/teams/@{encodeURIComponent('7ee21ca8-fec4-4608-b0a2-b0721d119588')}/channels/@{encodeURIComponent('19:bd493696436340bf82a2b299fa9080a3@thread.tacv2')}/messages"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "default": {
+                                "actions": {
+                                    "Post_a_message_(V3)_13": {
+                                        "runAfter": {},
+                                        "type": "ApiConnection",
+                                        "inputs": {
+                                            "body": {
+                                                "body": {
+                                                    "content": "<p>This is Default condition in switch. No relevent Alert is found in switch.</p>",
+                                                    "contentType": "html"
+                                                }
+                                            },
+                                            "host": {
+                                                "connection": {
+                                                    "name": "@parameters('$connections')['teams']['connectionId']"
+                                                }
+                                            },
+                                            "method": "post",
+                                            "path": "/v3/beta/teams/@{encodeURIComponent('7ee21ca8-fec4-4608-b0a2-b0721d119588')}/channels/@{encodeURIComponent('19:bd493696436340bf82a2b299fa9080a3@thread.tacv2')}/messages"
+                                        }
+                                    }
+                                }
+                            },
+                            "expression": "@triggerBody().data.context.condition.allOf[0].metricName",
+                            "type": "Switch"
+                        }
+                    },
+                    "outputs": {}
+                },
+                "parameters": {
+                    "$connections": {
+                        "value": {
+                            "teams": {
+                                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('Teams_connections_name'))]",
+                                "connectionName": "[parameters('Teams_connections_name')]",
+                                "id": "/subscriptions/80ebef40-3f7f-4972-b829-72efcd567faf/providers/Microsoft.Web/locations/eastus/managedApis/teams"
+                            }
+                        }
+                    }
+                }
+            }
+        }        
+    ]
+}

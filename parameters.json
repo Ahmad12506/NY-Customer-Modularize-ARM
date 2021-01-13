@@ -3,34 +3,34 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "factoryName": {
-            "value": "nydwniiihtyeb"
+            "value": "nwetyeb"
         },
         "currentTime": {
             "defaultValue": "[utcNow('u')]"
         },
         "storageAccountName": {
-            "value": "hetridmfas"
+            "value": "hewsfas"
         },
         "location": {
             "value": "eastus"
         },
         "Action_Group_Name": {
-            "value": "eastus"
+            "value": "myactcicd"
         },
         "Action_Email": {
-            "value": "eastus"
+            "value": "Ahmad.asad@emumba.com"
         },
         "Teams_connections_name": {
-            "value": "eastus"
+            "value": "teams-abc"
         },
         "Logic_App_Name": {
-            "value": "eastus"
+            "value": "logaptabc"
         },
         "yourdb": {
-            "value": "sareriiesdfr"
+            "value": "sarsddfr"
         },
         "yourserver": {
-            "value": "samsdfityui"
+            "value": "samsddi"
         },
         "serverlogin": {
             "value": "ahmad12506"
@@ -39,7 +39,7 @@
             "value": "Ahmadasad@12506"
         },
         "publicSASURI": {
-            "value": "https://storag6o62wodqgdj2k.blob.core.windows.net/?sv=2019-12-12&ss=bfqt&srt=sco&sp=rwdlacupx&se=2021-03-31T20:23:16Z&st=2021-01-08T12:23:16Z&spr=https,http&sig=WlxDVdoBiPPyT%2FWAXmI1LxBwadyqI3QmDJhX35YnANM%3D"
+            "value": "https://storag6o62wodqgdj2k.blob.core.windows.net/?sv=2019-12-12&ss=bfqt&srt=sco&sp=rwdlacupx&se=2021-03-01T17:54:45Z&st=2021-01-12T09:54:45Z&spr=https,http&sig=3tOpv%2FLnpM6JE0%2F748YBiV1FVEiOKZSKMA73ZpCmjZY%3D" 
         }
     }
 }

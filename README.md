@@ -1,4 +1,4 @@
-# NY-Customer-Modularize-ARM 
+# One-Click-Deployment-Customer-Modularize-ARM 
 
 <h2>Modularized Customer Template</h2>
 <h5>Modularized template for Data factory with all its resource.<h5>

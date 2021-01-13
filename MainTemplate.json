@@ -22,7 +22,7 @@
        },
        "publicSASURI":{
             "type": "string",
-            "defaultValue": "https://storag6o62wodqgdj2k.blob.core.windows.net/?sv=2019-12-12&ss=bfqt&srt=sco&sp=rwdlacupx&se=2021-03-01T17:54:45Z&st=2021-01-12T09:54:45Z&spr=https,http&sig=3tOpv%2FLnpM6JE0%2F748YBiV1FVEiOKZSKMA73ZpCmjZY%3D",
+            "defaultValue": "https://storag6o62wodqgdj2k.blob.core.windows.net/?sv=2019-12-12&ss=bfqt&srt=sco&sp=rwdlacupx&se=2021-03-01T17:54:45Z&st=2021-01-12T09:54:45Z&spr=https,http&sig=3tOpv%2FLnpM6JE0%2F748YBiV1FVEiOKZSKMA73ZpCmjZY%3D", 
             "metadata": {
             "description": "Enter SAS URI for public side storage account."
             }
@@ -133,9 +133,6 @@
                 "contentVersion": "1.0.0.0"
               },
               "parameters": {
-                    "Save_into_SQL":{
-                        "value": "[parameters('Save_into_SQL')]"
-                    },
                     "yourserver": {
                         "value": "[variables('yourserver')]"
                     },
@@ -217,6 +214,9 @@
                     "storageAccountName": {
                         "value": "[variables('storageAccountName')]"
                     },
+                    "publicSASURI": {
+                        "value": "[parameters('publicSASURI')]"
+                    },
                     "location": {
                         "value": "[parameters('location')]"
                     },
@@ -225,9 +225,6 @@
                     },
                     "Action_Email": {
                         "value": "[parameters('Action_Email')]"
-                    },
-                    "Save_into_SQL": {
-                        "value": "[parameters('Save_into_SQL')]"
                     },
                     "yourserver": {
                         "value": "[variables('yourserver')]"

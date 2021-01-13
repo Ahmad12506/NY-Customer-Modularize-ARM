@@ -16,7 +16,7 @@ steps:
     azureResourceManagerConnection: 'AhmadTestCustMod-con'
     subscriptionId: '80ebef40-3f7f-4972-b829-72efcd567faf'
     action: 'Create Or Update Resource Group'
-    resourceGroupName: 'cicd-test-ahmad'
+    resourceGroupName: 'cicd-test-ahmad01'
     location: 'East US'
     templateLocation: 'Linked artifact'
     csmFile: 'MainTemplate.json'

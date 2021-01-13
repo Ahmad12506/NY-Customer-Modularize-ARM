@@ -28,7 +28,7 @@
 			"metadata": {
 				"description": "By default EastUs is only allowed location for all resources."
 			}
-		},
+		}, 
 		"Action_Group_Name": {
 			"type": "String",
 			"metadata": {

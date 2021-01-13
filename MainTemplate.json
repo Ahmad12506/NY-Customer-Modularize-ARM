@@ -11,7 +11,10 @@
         },
         "currentTime": {
             "type": "string",
-            "defaultValue": "[utcNow('u')]"
+            "defaultValue": "[utcNow('u')]",
+            "metadata": {
+            "description": "This will takes current time to create daily trigger."
+            }
         },
         "storageAccountName": {
             "type": "string",

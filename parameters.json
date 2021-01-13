@@ -1,0 +1,46 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "value": "nydwniiihtyeb"
+        },
+        "currentTime": {
+            "defaultValue": "[utcNow('u')]"
+        },
+        "storageAccountName": {
+            "value": "hetridmfas"
+        },
+        "location": {
+            "value": "eastus"
+        },
+        "Action_Group_Name": {
+            "value": "eastus"
+        },
+        "Action_Email": {
+            "value": "eastus"
+        },
+        "Teams_connections_name": {
+            "value": "eastus"
+        },
+        "Logic_App_Name": {
+            "value": "eastus"
+        },
+        "yourdb": {
+            "value": "sareriiesdfr"
+        },
+        "yourserver": {
+            "value": "samsdfityui"
+        },
+        "serverlogin": {
+            "value": "ahmad12506"
+        },
+        "serverpassword": {
+            "value": "Ahmadasad@12506"
+        },
+        "publicSASURI": {
+            "value": "https://storag6o62wodqgdj2k.blob.core.windows.net/?sv=2019-12-12&ss=bfqt&srt=sco&sp=rwdlacupx&se=2021-03-31T20:23:16Z&st=2021-01-08T12:23:16Z&spr=https,http&sig=WlxDVdoBiPPyT%2FWAXmI1LxBwadyqI3QmDJhX35YnANM%3D"
+        }
+    }
+}
+

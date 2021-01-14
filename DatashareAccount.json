@@ -22,7 +22,7 @@
         }
     },
     "variables": {
-        "dataShareName": "[concat(parameters('Data_Share_Name'),'share')]"
+        "dataShareAccountName": "[concat(parameters('Data_Share_Name'), 'shareaccount')]"
     },
     "resources": [
         {

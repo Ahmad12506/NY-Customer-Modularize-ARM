@@ -235,7 +235,7 @@
                         "value": "[variables('storageAccountName')]"
                     },
                     "Create_DataShare_Customer": {
-                        "value": "[variables('Create_DataShare_Customer')]"
+                        "value": "[parameters('Create_DataShare_Customer')]"
                     },
                     "publicSASURI": {
                         "value": "[parameters('publicSASURI')]"

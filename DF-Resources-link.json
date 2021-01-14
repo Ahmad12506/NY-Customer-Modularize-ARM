@@ -210,7 +210,7 @@
 			]
 		},
 		{
-            "condition":"[equals(parameters('Create_DataShare_Customer'),'No')]",
+            		"condition":"[equals(parameters('Create_DataShare_Customer'),'No')]",
 			"name": "[concat(parameters('factoryName'), '/SqlDataLoader')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -1027,7 +1027,7 @@
 			]
 		},
         {
-            "condition":"[equals(parameters('Create_DataShare_Customer'),'Yes')]",
+            		"condition":"[equals(parameters('Create_DataShare_Customer'),'Yes')]",
 			"name": "[concat(parameters('factoryName'), '/SqlDataLoader_DataShare')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -1774,7 +1774,7 @@
 			]
 		},
 		{
-            "condition":"[equals(parameters('Create_DataShare_Customer'),'No')]",
+            		"condition":"[equals(parameters('Create_DataShare_Customer'),'No')]",
 			"name": "[concat(parameters('factoryName'), '/CSVDatasetPublic')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",

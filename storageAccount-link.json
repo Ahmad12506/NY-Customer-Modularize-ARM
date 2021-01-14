@@ -15,6 +15,9 @@
               }
         }
     },
+    "variables": {
+       "containerName":"customer"
+   },
     "resources": [
         {
             "type": "Microsoft.Storage/storageAccounts",
@@ -26,6 +29,16 @@
                 },
             "kind": "StorageV2",
             "properties": {}
+            "resources": [
+                {
+                "type": "blobServices/containers",
+                "apiVersion": "2019-06-01",
+                "name": "[concat('default/', variables('containerName'))]",
+                "dependsOn": [
+                    "[parameters('storageAccountName')]"
+                ]
+                }
+            ]
         }
     ]
 } 

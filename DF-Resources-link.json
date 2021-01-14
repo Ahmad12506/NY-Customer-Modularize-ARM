@@ -181,6 +181,7 @@
 			}
 		},
 		{
+            "condition":"[equals(parameters('Create_DataShare_Customer'),'No')]",
 			"name": "[concat(parameters('factoryName'), '/DailyTriggerSQL')]",
 			"type": "Microsoft.DataFactory/factories/triggers",
 			"apiVersion": "2018-06-01",
@@ -209,8 +210,38 @@
 				"[concat(variables('factoryId'), '/pipelines/SqlDataLoader')]"
 			]
 		},
+        {
+            "condition":"[equals(parameters('Create_DataShare_Customer'),'Yes')]",
+			"name": "[concat(parameters('factoryName'), '/DailyTriggerSQL')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "This trigger will automatically runs on every day.",
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [{
+					"pipelineReference": {
+						"referenceName": "SqlDataLoader_DataShare",
+						"type": "PipelineReference"
+					},
+					"parameters": {}
+				}],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Hour",
+						"interval": 24,
+						"startTime": "[parameters('currentTime')]",
+						"timeZone": "UTC"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/SqlDataLoader_DataShare')]"
+			]
+		},
 		{
-            		"condition":"[equals(parameters('Create_DataShare_Customer'),'No')]",
+            "condition":"[equals(parameters('Create_DataShare_Customer'),'No')]",
 			"name": "[concat(parameters('factoryName'), '/SqlDataLoader')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -1027,7 +1058,7 @@
 			]
 		},
         {
-            		"condition":"[equals(parameters('Create_DataShare_Customer'),'Yes')]",
+            "condition":"[equals(parameters('Create_DataShare_Customer'),'Yes')]",
 			"name": "[concat(parameters('factoryName'), '/SqlDataLoader_DataShare')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -1774,7 +1805,7 @@
 			]
 		},
 		{
-            		"condition":"[equals(parameters('Create_DataShare_Customer'),'No')]",
+            "condition":"[equals(parameters('Create_DataShare_Customer'),'No')]",
 			"name": "[concat(parameters('factoryName'), '/CSVDatasetPublic')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",

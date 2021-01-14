@@ -58,6 +58,16 @@
                 "description": "The name must begin with a letter or number, end with a letter, number or underscore, and may contain only letters, numbers, underscores, periods, or hyphens."
                 }
         },
+        "Create_DataShare_Customer":{
+		    "type": "string",
+		    "metadata": {
+			    "description": "Select 'Yes' to Create DataShare. Otherwise 'No'."
+		    },
+		    "allowedValues":[
+			    "Yes",
+			    "No"
+		    ]
+        },
         "Logic_App_Name": {
             "defaultValue": "newlogicapp",
             "type": "String",
@@ -216,6 +226,9 @@
                     },
                     "storageAccountName": {
                         "value": "[variables('storageAccountName')]"
+                    },
+                    "Create_DataShare_Customer": {
+                        "value": "[variables('Create_DataShare_Customer')]"
                     },
                     "publicSASURI": {
                         "value": "[parameters('publicSASURI')]"

@@ -2462,7 +2462,8 @@
 								"name": "PipelineName",
 								"operator": "Include",
 								"values": [
-									"SqlDataLoader"
+									"SqlDataLoader",
+                                    "SqlDataLoader_DataShare"
 								]
 							},
 							{
@@ -2533,7 +2534,8 @@
 								"name": "PipelineName",
 								"operator": "Include",
 								"values": [
-									"SqlDataLoader"
+									"SqlDataLoader",
+                                    "SqlDataLoader_DataShare"
 								]
 							},
 							{
@@ -2587,7 +2589,8 @@
 								"name": "Name",
 								"operator": "Include",
 								"values": [
-									"SqlDataLoader"
+									"SqlDataLoader",
+                                    "SqlDataLoader_DataShare"
 								]
 							},
 							{
@@ -2641,7 +2644,8 @@
 								"name": "Name",
 								"operator": "Include",
 								"values": [
-									"SqlDataLoader"
+									"SqlDataLoader",
+                                    "SqlDataLoader_DataShare"
 								]
 							},
 							{
@@ -2695,7 +2699,8 @@
 								"name": "Name",
 								"operator": "Include",
 								"values": [
-									"SqlDataLoader"
+									"SqlDataLoader",
+                                    "SqlDataLoader_DataShare"
 								]
 							},
 							{
@@ -2761,7 +2766,8 @@
 								"name": "PipelineName",
 								"operator": "Include",
 								"values": [
-									"SqlDataLoader"
+									"SqlDataLoader",
+                                    "SqlDataLoader_DataShare"
 								]
 							},
 							{
@@ -2827,7 +2833,8 @@
 								"name": "PipelineName",
 								"operator": "Include",
 								"values": [
-									"SqlDataLoader"
+									"SqlDataLoader",
+                                    "SqlDataLoader_DataShare"
 								]
 							},
 							{
@@ -2893,7 +2900,8 @@
 								"name": "PipelineName",
 								"operator": "Include",
 								"values": [
-									"SqlDataLoader"
+									"SqlDataLoader",
+                                    "SqlDataLoader_DataShare"
 								]
 							},
 							{
@@ -2959,7 +2967,8 @@
 								"name": "PipelineName",
 								"operator": "Include",
 								"values": [
-									"SqlDataLoader"
+									"SqlDataLoader",
+                                    "SqlDataLoader_DataShare"
 								]
 							},
 							{

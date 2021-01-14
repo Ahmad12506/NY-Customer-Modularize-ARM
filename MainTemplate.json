@@ -58,6 +58,13 @@
                 "description": "The name must begin with a letter or number, end with a letter, number or underscore, and may contain only letters, numbers, underscores, periods, or hyphens."
                 }
         },
+        "Data_Share_Name": {
+			"defaultValue": "mynewdatashare",
+			"type": "String",
+			"metadata": {
+				"description": "Data share account name should have length of 3 - 90, and cannot contain <>%&:?#*$^()|-+={}[]!~@"
+			}
+		},
         "Create_DataShare_Customer":{
 		    "type": "string",
 		    "metadata": {
@@ -259,8 +266,37 @@
                     }
                 }
             }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "Datashahre-link",
+            "dependsOn": [
+                "storageAccount-link",
+                "SQLServerandDB-link",
+                "Logicapp-connections-actiongroup-link"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "https://raw.githubusercontent.com/Ahmad12506/NY-Customer-Modularize-ARM/main/DatashareAccount.json",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "Data_Share_Name": {
+                        "value": "[parameters('Data_Share_Name')]"
+                    },
+                    "Create_DataShare_Customer": {
+                        "value": "[parameters('Create_DataShare_Customer')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            }
         }
     ],
     "outputs": {
     }
 }
+

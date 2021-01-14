@@ -1,44 +1,40 @@
 {
-    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-        "storageAccountName": {
-              "type": "string",
-              "metadata": {
-              "description": "The field can contain only lowercase letters and numbers. Name must be between 1 and 11 characters."
-            }
-        },
-        "location": {
-              "type": "string",
-              "metadata": {
-              "description": "By default EastUs is only allowed location for all resources."
-              }
-        }
-    },
-    "variables": {
-       "containerName":"customer"
-   },
-    "resources": [
-        {
-            "type": "Microsoft.Storage/storageAccounts",
-            "apiVersion": "2019-06-01",
-            "name": "[parameters('storageAccountName')]",
-            "location": "[parameters('location')]",
-            "sku": {
-                "name": "Standard_LRS"
-                },
-            "kind": "StorageV2",
-            "properties": {}
-            "resources": [
-                {
-                "type": "blobServices/containers",
-                "apiVersion": "2019-06-01",
-                "name": "[concat('default/', variables('containerName'))]",
-                "dependsOn": [
-                    "[parameters('storageAccountName')]"
-                ]
-                }
-            ]
-        }
-    ]
-} 
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"storageAccountName": {
+			"type": "string",
+			"metadata": {
+				"description": "The field can contain only lowercase letters and numbers. Name must be between 1 and 11 characters."
+			}
+		},
+		"location": {
+			"type": "string",
+			"metadata": {
+				"description": "By default EastUs is only allowed location for all resources."
+			}
+		}
+	},
+	"variables": {
+		"containerName": "customer"
+	},
+	"resources": [{
+		"type": "Microsoft.Storage/storageAccounts",
+		"apiVersion": "2019-06-01",
+		"name": "[parameters('storageAccountName')]",
+		"location": "[parameters('location')]",
+		"sku": {
+			"name": "Standard_LRS"
+		},
+		"kind": "StorageV2",
+		"properties": {},
+		"resources": [{
+			"type": "blobServices/containers",
+			"apiVersion": "2019-06-01",
+			"name": "[concat('default/', variables('containerName'))]",
+			"dependsOn": [
+				"[parameters('storageAccountName')]"
+			]
+		}]
+	}]
+}

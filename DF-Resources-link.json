@@ -2304,6 +2304,7 @@
 			]
 		},
 		{
+			"condition":"[equals(parameters('Create_DataShare_Customer'),'No')]",
 			"name": "[concat(parameters('factoryName'), '/AzureBlobStoragePublic')]",
 			"type": "Microsoft.DataFactory/factories/linkedServices",
 			"apiVersion": "2018-06-01",

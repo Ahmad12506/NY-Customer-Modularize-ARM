@@ -36,7 +36,7 @@
 				"[parameters('storageAccountName')]"
 			],
 			"properties": {
-                "publicAccess": "Container"
+                "publicAccess": "Blob"
             }
 		}]
 	}]
